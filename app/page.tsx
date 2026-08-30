@@ -93,6 +93,7 @@ function profileTone(profile: string) {
 }
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'methodology'>('dashboard');
   const [city, setCity] = useState<City>('Brussels');
   const [scenario, setScenario] = useState<Scenario>('heat');
   const [query, setQuery] = useState('');
@@ -118,6 +119,30 @@ export default function Home() {
     <main className="min-h-screen bg-background text-foreground">
       <div className="border-b border-border/80 bg-card/90">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-5 px-5 py-4 md:px-8">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('dashboard')}
+              className={`px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'dashboard'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('methodology')}
+              className={`px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-lg transition-colors ${
+                activeTab === 'methodology'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              Methodology & Framework
+            </button>
+          </div>
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
               <Sparkles className="size-5" aria-hidden="true" />
@@ -137,7 +162,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-
+{activeTab === 'dashboard' ? (
       <div className="mx-auto max-w-[1440px] px-5 py-7 md:px-8 md:py-10">
         <section className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-end">
           <div className="max-w-3xl">
@@ -333,6 +358,70 @@ export default function Home() {
           </div>
         </section>
       </div>
+      ) : (
+      <div className="mx-auto max-w-[1200px] px-5 py-10 md:px-8">
+        <div className="mb-10 text-center md:text-left">
+          <h2 className="text-3xl font-bold tracking-tight text-foreground font-heading">
+            Methodology & Analytical Framework
+          </h2>
+          <p className="mt-3 text-base text-muted-foreground max-w-3xl">
+            This research prototype investigates the algorithmic governance of urban heat adaptation, focusing on how data-driven interventions are justified, deployed, and audited across socio-spatial inequalities in Brussels and Amsterdam.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Card 1: Spatial Environmental Justice */}
+          <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">01</span>
+              <h3 className="font-semibold text-lg text-foreground">Socio-Spatial Environmental Justice</h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Urban heat islands (UHI) disproportionately affect socially vulnerable neighborhoods with lower tree canopy density and higher building density. This prototype maps surface temperature anomalies against socio-economic vulnerability indicators to audit cooling disparities.
+            </p>
+          </div>
+
+          {/* Card 2: Algorithmic Legitimacy Chain */}
+          <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">02</span>
+              <h3 className="font-semibold text-lg text-foreground">Algorithmic Legitimacy Chain</h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Drawing on Fritz Scharpf and Vivien Schmidt&apos;s legitimacy framework, policies are evaluated across:
+            </p>
+            <ul className="mt-3 space-y-1.5 text-xs text-muted-foreground list-disc list-inside">
+              <li><strong>Input Legitimacy:</strong> Citizen participation, deliberative processes, and vulnerable group inclusion.</li>
+              <li><strong>Throughput Legitimacy:</strong> Procedural transparency, algorithm register disclosures, and legal oversight.</li>
+              <li><strong>Output Legitimacy:</strong> Measurable heat reduction and efficiency claims in municipal action plans.</li>
+            </ul>
+          </div>
+
+          {/* Card 3: Comparative Urban Cases */}
+          <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">03</span>
+              <h3 className="font-semibold text-lg text-foreground">Comparative Case Strategy</h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <strong>Brussels Capital Region:</strong> Multi-level regional governance, FARI AI for Common Good Institute, and Bruxelles Environnement climate resilience initiatives.<br className="mb-2"/>
+              <strong>Amsterdam:</strong> Pioneering algorithmic transparency via the Amsterdam Algorithm Register and automated spatial decision tools.
+            </p>
+          </div>
+
+          {/* Card 4: Data Pipeline & Audit Heuristic */}
+          <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">04</span>
+              <h3 className="font-semibold text-lg text-foreground">Data Pipeline & Decision Audit</h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              The decision-support audit cross-references satellite thermal observations (Copernicus Land Monitoring Service), municipal tree inventory data, and census-level socioeconomic vulnerability to calculate the <em>Cooling Priority Index</em>.
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
     </main>
   );
 }
