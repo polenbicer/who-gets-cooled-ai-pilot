@@ -10,15 +10,32 @@ import {
   Flame,
   Info,
   Layers,
+  RefreshCw,
   Scale,
   Search,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
   Sliders,
+  Trees,
+  TrendingDown,
+  TrendingUp,
   Users,
+  Wrench,
 } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -198,6 +215,11 @@ export default function Home() {
   const [incomeWeight, setIncomeWeight] = useState<number>(33);
   const [isCustomWeights, setIsCustomWeights] = useState<boolean>(false);
 
+  // What-If Cooling Interventions State
+  const [applyTrees, setApplyTrees] = useState<boolean>(false);
+  const [applyShelter, setApplyShelter] = useState<boolean>(false);
+  const [applyRetrofit, setApplyRetrofit] = useState<boolean>(false);
+
   useEffect(() => {
     fetch(CSV_URL)
       .then(res => res.text())
@@ -210,27 +232,69 @@ export default function Home() {
       .catch(err => console.error('Error fetching live Google Sheet:', err));
   }, []);
 
+  // Baseline Ranking (Heat-First, 70/30) for Rank Shift Delta Calculation
+  const baselineRanks = useMemo(() => {
+    const list = data
+      .filter((area) => area.city === city)
+      .map((area) => {
+        const social = (area.age + area.income) / 2;
+        const score = area.heat * 0.7 + social * 0.3;
+        return { name: area.name, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const map: Record<string, number> = {};
+    list.forEach((item, index) => {
+      map[item.name] = index + 1;
+    });
+    return map;
+  }, [data, city]);
+
+  // Current Dynamic Ranking with Custom Weights + What-If Interventions
   const ranked = useMemo(() => {
     return data
       .filter((area) => area.city === city)
       .map((area) => {
+        // Apply What-If Interventions to adjusted metrics
+        let effectiveHeat = area.heat;
+        let effectiveAge = area.age;
+        let effectiveIncome = area.income;
+
+        if (applyTrees) effectiveHeat = Math.max(1, effectiveHeat - 1.0);
+        if (applyShelter) effectiveAge = Math.max(1, effectiveAge - 1.2);
+        if (applyRetrofit) effectiveIncome = Math.max(1, effectiveIncome - 1.0);
+
         let calculatedScore = 0;
         if (isCustomWeights) {
-          calculatedScore = (area.heat * (heatWeight / 100)) + (area.age * (ageWeight / 100)) + (area.income * (incomeWeight / 100));
+          calculatedScore = (effectiveHeat * (heatWeight / 100)) + (effectiveAge * (ageWeight / 100)) + (effectiveIncome * (incomeWeight / 100));
         } else {
-          const social = (area.age + area.income) / 2;
+          const social = (effectiveAge + effectiveIncome) / 2;
           const rule = scenarios[scenario];
-          calculatedScore = area.heat * rule.heatWeight + social * rule.socialWeight;
+          calculatedScore = effectiveHeat * rule.heatWeight + social * rule.socialWeight;
         }
+
         return {
           ...area,
-          social: (area.age + area.income) / 2,
+          effectiveHeat,
+          effectiveAge,
+          effectiveIncome,
+          social: (effectiveAge + effectiveIncome) / 2,
           score: calculatedScore,
         };
       })
       .sort((a, b) => b.score - a.score)
-      .map((area, index) => ({ ...area, rank: index + 1 }));
-  }, [data, city, scenario, isCustomWeights, heatWeight, ageWeight, incomeWeight]);
+      .map((area, index) => {
+        const currentRank = index + 1;
+        const baseline = baselineRanks[area.name] || currentRank;
+        const shift = baseline - currentRank; // Positive = jumped up, Negative = dropped down
+        return {
+          ...area,
+          rank: currentRank,
+          baselineRank: baseline,
+          rankShift: shift,
+        };
+      });
+  }, [data, city, scenario, isCustomWeights, heatWeight, ageWeight, incomeWeight, baselineRanks, applyTrees, applyShelter, applyRetrofit]);
 
   const matches = useMemo(() => {
     const cleanQuery = query.trim().toLocaleLowerCase();
@@ -240,6 +304,22 @@ export default function Home() {
 
   const top = ranked[0] || data[0];
   const rule = scenarios[scenario];
+
+  // Radar Data calculation for Top Priority Target vs. City Average
+  const radarData = useMemo(() => {
+    const cityItems = ranked;
+    if (!top || cityItems.length === 0) return [];
+
+    const avgHeat = cityItems.reduce((acc, curr) => acc + curr.heat, 0) / cityItems.length;
+    const avgAge = cityItems.reduce((acc, curr) => acc + curr.age, 0) / cityItems.length;
+    const avgIncome = cityItems.reduce((acc, curr) => acc + curr.income, 0) / cityItems.length;
+
+    return [
+      { metric: 'Heat Proxy', target: top.heat, average: Number(avgHeat.toFixed(2)), fullMark: 5 },
+      { metric: 'Elderly (65+)', target: top.age, average: Number(avgAge.toFixed(2)), fullMark: 5 },
+      { metric: 'Low Income', target: top.income, average: Number(avgIncome.toFixed(2)), fullMark: 5 },
+    ];
+  }, [top, ranked]);
 
   // OpenStreetMap Harita Entegrasyonu
   const mapHtml = useMemo(() => {
@@ -393,17 +473,17 @@ export default function Home() {
 
       {activeTab === 'dashboard' ? (
         <div className="mx-auto max-w-[1400px] px-5 py-8 md:px-8 md:py-10">
-          {/* Hero Section */}
+          {/* Hero Section with Clarified Core Philosophy */}
           <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-end">
             <div className="max-w-3xl">
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2410c]">
-                <BrainCircuit className="size-4" aria-hidden="true" /> Algorithmic Governance Audit
+                <BrainCircuit className="size-4" aria-hidden="true" /> AI Decision-Support Audit
               </p>
               <h1 className="font-serif text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-950 leading-snug">
-  Who Gets Cooled? Auditing Algorithmic Climate Adaptation.
-</h1>
-              <p className="mt-4 text-sm leading-relaxed text-stone-600 md:text-base">
-                An open research prototype investigating the intersection of algorithmic governance, urban climate adaptation, and environmental justice. By auditing how local governments in Brussels and Amsterdam deploy data-driven cooling interventions, this tool examines whether AI-assisted allocation protects the most vulnerable populations or reinforces spatial inequalities.
+                Who Gets Cooled? Auditing Algorithmic Climate Adaptation.
+              </h1>
+              <p className="mt-3 text-sm leading-relaxed text-stone-600 md:text-base">
+                AI does not decide which neighbourhood gets cooled. <strong>Human policymakers choose what data to value</strong>—the algorithm merely computes the spatial consequences. This interactive sandbox audits how shifting political priorities in Brussels and Amsterdam re-allocate climate resilience resources.
               </p>
             </div>
 
@@ -456,7 +536,7 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Top Row: Cities & Policy Rules via High-Affordance Buttons */}
+            {/* Top Row: Cities & Policy Rules */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
               {/* City Switcher */}
               <div className="lg:col-span-4">
@@ -544,19 +624,24 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Policy Rule Dynamic Note Banner */}
-            {!isCustomWeights ? (
-              <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200/80 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-rose-700 flex items-center gap-1"><Flame className="size-3.5" /> {Math.round(rule.heatWeight * 100)}% Heat Weight</span>
-                  <span className="text-stone-300">|</span>
-                  <span className="font-bold text-slate-800 flex items-center gap-1"><Users className="size-3.5" /> {Math.round(rule.socialWeight * 100)}% Social Vulnerability</span>
-                </div>
-                <p className="text-stone-500 text-[11px] italic">{rule.note}</p>
+            {/* Dynamic Political Shift Insight Banner */}
+            <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-rose-700 flex items-center gap-1"><Flame className="size-3.5" /> {isCustomWeights ? heatWeight : Math.round(rule.heatWeight * 100)}% Heat Weight</span>
+                <span className="text-stone-300">|</span>
+                <span className="font-bold text-slate-800 flex items-center gap-1"><Users className="size-3.5" /> {isCustomWeights ? (ageWeight + incomeWeight) : Math.round(rule.socialWeight * 100)}% Social Weight</span>
               </div>
-            ) : null}
+              <div className="text-stone-600 text-[11px] font-medium flex items-center gap-1.5">
+                <Scale className="size-3.5 text-[#c2410c] shrink-0" />
+                <span>
+                  {scenario === 'justice' || (isCustomWeights && (ageWeight + incomeWeight) > 50)
+                    ? 'Social Justice Prioritised: Vulnerable demographics move up despite lower surface heat.'
+                    : 'Physical Heat Prioritised: Dense urban surfaces take precedence over social inequality.'}
+                </span>
+              </div>
+            </div>
 
-            {/* Custom Sliders (Shown when toggled) */}
+            {/* Custom Sliders */}
             {isCustomWeights && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 mt-5 border-t border-stone-200">
                 <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
@@ -607,14 +692,17 @@ export default function Home() {
             )}
           </section>
 
-          {/* 1. SECTION: Priority Ranking & Top Priority Target */}
-          <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
+          {/* 1. SECTION: Priority Ranking (with Rank Shift Deltas) & Top Priority Target (with Radar Chart & Interventions) */}
+          <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.65fr)]">
+            {/* Table & Bar Chart */}
             <Card className="border border-stone-200 bg-white shadow-xs">
               <CardHeader className="border-b border-stone-100 pb-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <CardTitle className="text-base font-bold text-slate-900">Neighbourhood Priority Ranking</CardTitle>
-                    <CardDescription className="text-xs text-stone-500">City-relative score index (5 = highest intervention urgency).</CardDescription>
+                    <CardDescription className="text-xs text-stone-500">
+                      Rank Shift (▲/▼) compares current policy to baseline Heat-First rules.
+                    </CardDescription>
                   </div>
                   <Badge variant="outline" className="border-stone-300 bg-stone-50 text-slate-800 text-xs font-semibold">
                     {isCustomWeights ? 'Custom Weights' : rule.label}
@@ -622,7 +710,7 @@ export default function Home() {
                 </div>
               </CardHeader>
               <CardContent className="pt-5">
-                <ChartContainer config={chartConfig} className="h-[280px] w-full aspect-auto md:h-[340px]">
+                <ChartContainer config={chartConfig} className="h-[280px] w-full aspect-auto md:h-[320px]">
                   <BarChart data={ranked} layout="vertical" margin={{ left: 8, right: 22, top: 4, bottom: 4 }}>
                     <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis type="number" domain={[0, 5]} tickCount={6} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
@@ -637,6 +725,7 @@ export default function Home() {
                     <TableHeader className="bg-stone-50">
                       <TableRow className="border-stone-200">
                         <TableHead className="w-14 text-xs font-bold text-stone-600">Rank</TableHead>
+                        <TableHead className="w-20 text-xs font-bold text-stone-600">Shift</TableHead>
                         <TableHead className="text-xs font-bold text-stone-600">Neighbourhood</TableHead>
                         <TableHead className="hidden lg:table-cell text-xs font-bold text-stone-600">AI Vulnerability Profile</TableHead>
                         <TableHead className="text-right text-xs font-bold text-stone-600">Score</TableHead>
@@ -646,6 +735,19 @@ export default function Home() {
                       {ranked.map((area) => (
                         <TableRow key={area.name} className="border-stone-100 hover:bg-stone-50/60">
                           <TableCell className="font-mono text-xs text-stone-500 font-semibold">{area.rank}</TableCell>
+                          <TableCell>
+                            {area.rankShift > 0 ? (
+                              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                <TrendingUp className="size-3" /> +{area.rankShift}
+                              </span>
+                            ) : area.rankShift < 0 ? (
+                              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                                <TrendingDown className="size-3" /> {area.rankShift}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-stone-400 font-mono pl-1">—</span>
+                            )}
+                          </TableCell>
                           <TableCell className="font-semibold text-slate-900 text-xs">{area.name}</TableCell>
                           <TableCell className="hidden lg:table-cell">
                             <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium border ${profileTone(area.profile)}`}>
@@ -661,30 +763,124 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Top Priority Target Card */}
-            <div className="rounded-2xl bg-slate-950 p-6 text-white shadow-md border border-slate-900 flex flex-col justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Top Priority Target</p>
-                <h3 className="mt-1 font-serif text-3xl font-bold">{top.name}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{city} · priority score {top.score ? top.score.toFixed(2) : 'N/A'}</p>
+            {/* Top Priority Target + Radar Chart + What-If Simulator */}
+            <div className="flex flex-col gap-5">
+              {/* Target Card with Radar Chart */}
+              <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-md border border-slate-900">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Top Priority Target</p>
+                    <h3 className="mt-0.5 font-serif text-2xl font-bold">{top.name}</h3>
+                    <p className="text-xs text-slate-400">{city} · Score: {top.score ? top.score.toFixed(2) : 'N/A'}</p>
+                  </div>
+                  <Badge className="bg-amber-400/10 text-amber-300 border-amber-400/20 text-[10px]">Rank #1</Badge>
+                </div>
 
-                <div className="mt-6 grid grid-cols-3 gap-2.5">
+                {/* Radar Chart Component */}
+                <div className="mt-3 h-[180px] w-full flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+                      <PolarGrid stroke="#334155" />
+                      <PolarAngleAxis dataKey="metric" tick={{ fill: '#cbd5e1', fontSize: 10 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
+                      <Radar name={top.name} dataKey="target" stroke="#c2410c" fill="#c2410c" fillOpacity={0.6} />
+                      <Radar name="City Avg" dataKey="average" stroke="#64748b" fill="#64748b" fillOpacity={0.2} />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mt-2">
                   {[
-                    ['Heat Proxy', top.heat, 'text-rose-400'],
-                    ['Elderly (65+)', top.age, 'text-amber-400'],
-                    ['Low Income', top.income, 'text-sky-400'],
+                    ['Heat', top.heat, 'text-rose-400'],
+                    ['Elderly', top.age, 'text-amber-400'],
+                    ['Income', top.income, 'text-sky-400'],
                   ].map(([label, value, colorClass]) => (
-                    <div key={String(label)} className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-center">
+                    <div key={String(label)} className="rounded-lg bg-slate-900 p-2 border border-slate-800 text-center">
                       <p className="text-[10px] text-slate-400">{label}</p>
-                      <p className={`mt-0.5 font-mono text-lg font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
+                      <p className={`font-mono text-sm font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-slate-900 p-3.5 text-xs leading-relaxed border border-slate-800 text-slate-300">
-                <BrainCircuit className="mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true" />
-                <span><strong>Profile:</strong> {top.profile}</span>
+              {/* What-If Cooling Interventions Simulator */}
+              <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                    <Wrench className="size-3.5 text-[#c2410c]" /> "What-If" Interventions
+                  </h4>
+                  <span className="text-[10px] text-stone-500">Test policy impact on {top.name}</span>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setApplyTrees(!applyTrees)}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
+                      applyTrees
+                        ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Trees className={`size-4 ${applyTrees ? 'text-emerald-600' : 'text-stone-400'}`} />
+                      <span>+15% Urban Tree Canopy</span>
+                    </span>
+                    <Badge variant="outline" className={`text-[10px] ${applyTrees ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'text-stone-500'}`}>
+                      -1.0 Heat
+                    </Badge>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setApplyShelter(!applyShelter)}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
+                      applyShelter
+                        ? 'bg-amber-50 border-amber-300 text-amber-950 font-semibold'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users className={`size-4 ${applyShelter ? 'text-amber-600' : 'text-stone-400'}`} />
+                      <span>Cooling Shelter & Fountain Network</span>
+                    </span>
+                    <Badge variant="outline" className={`text-[10px] ${applyShelter ? 'bg-amber-100 border-amber-300 text-amber-800' : 'text-stone-500'}`}>
+                      -1.2 Age Risk
+                    </Badge>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setApplyRetrofit(!applyRetrofit)}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
+                      applyRetrofit
+                        ? 'bg-sky-50 border-sky-300 text-sky-950 font-semibold'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <ShieldAlert className={`size-4 ${applyRetrofit ? 'text-sky-600' : 'text-stone-400'}`} />
+                      <span>Social Housing Thermal Retrofit</span>
+                    </span>
+                    <Badge variant="outline" className={`text-[10px] ${applyRetrofit ? 'bg-sky-100 border-sky-300 text-sky-800' : 'text-stone-500'}`}>
+                      -1.0 Poverty Risk
+                    </Badge>
+                  </button>
+                </div>
+
+                {(applyTrees || applyShelter || applyRetrofit) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setApplyTrees(false);
+                      setApplyShelter(false);
+                      setApplyRetrofit(false);
+                    }}
+                    className="mt-3 w-full py-1.5 text-[11px] text-stone-500 hover:text-slate-900 flex items-center justify-center gap-1 border-t border-stone-100"
+                  >
+                    <RefreshCw className="size-3" /> Reset Interventions
+                  </button>
+                )}
               </div>
             </div>
           </section>
