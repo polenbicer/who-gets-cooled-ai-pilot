@@ -63,7 +63,7 @@ type Neighbourhood = {
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREdQHMp0P_JjheI_LaV__Ds8AhETMiRwH3BX9GUIbwHTG_Y0JmAim-at3d4whwILQxOYJLws28-fjH/pub?output=csv";
 
-// Varsayılan coğrafi enlem/boylam koordinatları
+// Coğrafi Enlem / Boylam Yedekleri
 const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   // Brussels
   'Marolles': { lat: 50.8385, lng: 4.3468 },
@@ -96,60 +96,70 @@ const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
 };
 
 function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
-  const lines = csvText.trim().split('\n');
+  const parseRow = (text: string) => {
+    const result: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(field.trim().replace(/^"|"$/g, ''));
+        field = '';
+      } else {
+        field += char;
+      }
+    }
+    result.push(field.trim().replace(/^"|"$/g, ''));
+    return result;
+  };
+
+  const lines = csvText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
   if (lines.length <= 1) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+  const headers = parseRow(lines[0]).map(h => h.toLowerCase());
   const cityIdx = headers.indexOf('city');
   const nameIdx = headers.indexOf('area_name');
   const heatIdx = headers.indexOf('relative_heat_proxy_score_1_5');
   const ageIdx = headers.indexOf('age_vulnerability_score_1_5');
   const incomeIdx = headers.indexOf('income_vulnerability_score_1_5');
-  
-  // Profil sütununu eşle (notes, profile, cluster veya ai_profile)
-  let profileIdx = headers.indexOf('ai_vulnerability_profile');
-  if (profileIdx === -1) profileIdx = headers.indexOf('notes');
-  if (profileIdx === -1) profileIdx = headers.indexOf('profile');
-  if (profileIdx === -1) profileIdx = headers.indexOf('cluster');
-
+  const notesIdx = headers.indexOf('notes') !== -1 ? headers.indexOf('notes') : headers.indexOf('ai_vulnerability_profile');
   const latIdx = headers.indexOf('lat');
   const lngIdx = headers.indexOf('lng');
 
   return lines.slice(1).map(line => {
-    // Virgül ayrımı sırasında tırnak içindeki metinleri koruyarak böl
-    const values = (line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(','))
-      .map(v => v.trim().replace(/^"|"$/g, ''));
-
+    const values = parseRow(line);
     const cityRaw = values[cityIdx] || 'Brussels';
     const city: City = cityRaw.toLowerCase().includes('amsterdam') ? 'Amsterdam' : 'Brussels';
     const name = values[nameIdx] || 'Unknown';
 
-    // Profil metni sayı/yıl gelirse puanlara göre doğru profili otomatik ata
-    let rawProfile = profileIdx !== -1 ? values[profileIdx] : '';
-    if (!rawProfile || !isNaN(Number(rawProfile))) {
-      const h = parseFloat(values[heatIdx]) || 1;
-      const a = parseFloat(values[ageIdx]) || 1;
-      const i = parseFloat(values[incomeIdx]) || 1;
-      if (h >= 4 && i >= 4) rawProfile = 'High heat + income vulnerability';
-      else if (a >= 4) rawProfile = 'Age vulnerability + lower heat';
-      else if (i >= 4) rawProfile = 'Income vulnerability + lower heat';
-      else rawProfile = 'Moderate baseline exposure';
+    const heat = parseFloat(values[heatIdx]?.replace(',', '.')) || 1;
+    const age = parseFloat(values[ageIdx]?.replace(',', '.')) || 1;
+    const income = parseFloat(values[incomeIdx]?.replace(',', '.')) || 1;
+
+    let profile = values[notesIdx] || '';
+    if (!profile || profile.includes('temperature.') || !isNaN(Number(profile))) {
+      if (heat >= 4 && income >= 4) profile = 'High heat + income vulnerability';
+      else if (age >= 4) profile = 'Age vulnerability + lower heat';
+      else if (income >= 4) profile = 'Income vulnerability + lower heat';
+      else profile = 'Moderate socio-spatial risk';
     }
 
     return {
       city,
       name,
-      heat: parseFloat(values[heatIdx]) || 1,
-      age: parseFloat(values[ageIdx]) || 1,
-      income: parseFloat(values[incomeIdx]) || 1,
-      profile: rawProfile,
-      lat: latIdx !== -1 && values[latIdx] ? parseFloat(values[latIdx]) : undefined,
-      lng: lngIdx !== -1 && values[lngIdx] ? parseFloat(values[lngIdx]) : undefined,
+      heat,
+      age,
+      income,
+      profile,
+      lat: latIdx !== -1 && values[latIdx] ? parseFloat(values[latIdx].replace(',', '.')) : undefined,
+      lng: lngIdx !== -1 && values[lngIdx] ? parseFloat(values[lngIdx].replace(',', '.')) : undefined,
     };
   });
 }
 
-const neighbourhoods: Neighbourhood[] = [
+const defaultNeighbourhoods: Neighbourhood[] = [
   { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, profile: 'High heat + income vulnerability' },
   { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.54, income: 5, profile: 'High heat + income vulnerability' },
   { city: 'Brussels', name: 'Cureghem Bara', heat: 5, age: 1, income: 4.95, profile: 'High heat + income vulnerability' },
@@ -169,23 +179,23 @@ const scenarios: Record<Scenario, { label: string; heatWeight: number; socialWei
 };
 
 const chartConfig = {
-  score: { label: 'Priority score', color: 'var(--primary)' },
+  score: { label: 'Priority score', color: '#c2410c' },
 } satisfies ChartConfig;
 
 function profileTone(profile: string) {
-  if (profile.startsWith('High heat')) return 'bg-rose-50 text-rose-800 ring-rose-200';
-  if (profile.startsWith('Age')) return 'bg-amber-50 text-amber-900 ring-amber-200';
-  return 'bg-emerald-50 text-emerald-800 ring-emerald-200';
+  if (profile.startsWith('High heat')) return 'bg-rose-50 text-rose-800 ring-rose-200 border-rose-200';
+  if (profile.startsWith('Age')) return 'bg-amber-50 text-amber-900 ring-amber-200 border-amber-200';
+  return 'bg-stone-100 text-stone-800 ring-stone-200 border-stone-200';
 }
 
 export default function Home() {
-  const [data, setData] = useState<Neighbourhood[]>(neighbourhoods);
+  const [data, setData] = useState<Neighbourhood[]>(defaultNeighbourhoods);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'methodology'>('dashboard');
   const [city, setCity] = useState<City>('Brussels');
   const [scenario, setScenario] = useState<Scenario>('heat');
   const [query, setQuery] = useState('');
 
-  // Policy Simulator Custom Weights
+  // Policy Simulator
   const [heatWeight, setHeatWeight] = useState<number>(34);
   const [ageWeight, setAgeWeight] = useState<number>(33);
   const [incomeWeight, setIncomeWeight] = useState<number>(33);
@@ -234,14 +244,14 @@ export default function Home() {
   const top = ranked[0] || data[0];
   const rule = scenarios[scenario];
 
-  // Gerçek Harita Dokümanı (OpenStreetMap + CARTO Katmanı)
+  // OpenStreetMap Harita Entegrasyonu
   const mapHtml = useMemo(() => {
     const center = CITY_CENTERS[city];
     const pinsJson = JSON.stringify(
       ranked.map(item => {
         const lat = item.lat ?? REAL_COORDS[item.name]?.lat ?? center.lat;
         const lng = item.lng ?? REAL_COORDS[item.name]?.lng ?? center.lng;
-        const color = item.score > 3.8 ? '#e11d48' : item.score > 2.5 ? '#d97706' : '#059669';
+        const color = item.score > 3.8 ? '#dc2626' : item.score > 2.5 ? '#d97706' : '#475569';
         return {
           name: item.name,
           lat,
@@ -266,28 +276,28 @@ export default function Home() {
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
           body, html { margin:0; padding:0; height:100%; width:100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-          #map { height: 100%; width: 100%; background: #f8fafc; }
+          #map { height: 100%; width: 100%; background: #f1f5f9; }
           .custom-pin {
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            border: 2.5px solid #ffffff;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             cursor: pointer;
             transition: transform 0.15s ease-in-out;
           }
-          .custom-pin:hover { transform: scale(1.3); }
+          .custom-pin:hover { transform: scale(1.25); }
           .leaflet-popup-content-wrapper {
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(15,23,42,0.15);
             padding: 2px;
           }
-          .popup-title { font-weight: 700; font-size: 13.5px; margin-bottom: 3px; color: #0f172a; }
-          .popup-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; margin-bottom: 5px; }
-          .popup-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 10.5px; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+          .popup-title { font-weight: 700; font-size: 13.5px; margin-bottom: 2px; color: #0f172a; }
+          .popup-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-bottom: 4px; }
+          .popup-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 10px; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 4px; }
           .metric-box { text-align: center; }
-          .metric-val { font-weight: bold; font-size: 12px; display: block; }
+          .metric-val { font-weight: bold; font-size: 11.5px; display: block; }
         </style>
       </head>
       <body>
@@ -295,8 +305,8 @@ export default function Home() {
         <script>
           const map = L.map('map', { zoomControl: true }).setView([${center.lat}, ${center.lng}], ${center.zoom});
           
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19
           }).addTo(map);
 
@@ -305,20 +315,20 @@ export default function Home() {
           pins.forEach(pin => {
             const icon = L.divIcon({
               className: 'custom-div-icon',
-              html: \`<div class="custom-pin" style="background:\${pin.color}; width:20px; height:20px;"></div>\`,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
+              html: \`<div class="custom-pin" style="background:\${pin.color}; width:18px; height:18px;"></div>\`,
+              iconSize: [18, 18],
+              iconAnchor: [9, 9]
             });
 
             const popupContent = \`
-              <div style="min-width: 160px;">
+              <div style="min-width: 155px;">
                 <div class="popup-title">\${pin.name}</div>
-                <div class="popup-badge" style="background:\${pin.color}15; color:\${pin.color};">Priority: \${pin.score}</div>
-                <div style="font-size:10.5px; color:#64748b; line-height:1.3;">\${pin.profile}</div>
+                <div class="popup-badge" style="background:\${pin.color}15; color:\${pin.color};">Score: \${pin.score}</div>
+                <div style="font-size:10px; color:#475569; line-height:1.3;">\${pin.profile}</div>
                 <div class="popup-metrics">
-                  <div class="metric-box"><span style="color:#64748b;">Heat</span><span class="metric-val" style="color:#e11d48;">\${pin.heat}</span></div>
+                  <div class="metric-box"><span style="color:#64748b;">Heat</span><span class="metric-val" style="color:#dc2626;">\${pin.heat}</span></div>
                   <div class="metric-box"><span style="color:#64748b;">Age</span><span class="metric-val" style="color:#d97706;">\${pin.age}</span></div>
-                  <div class="metric-box"><span style="color:#64748b;">Income</span><span class="metric-val" style="color:#059669;">\${pin.income}</span></div>
+                  <div class="metric-box"><span style="color:#64748b;">Income</span><span class="metric-val" style="color:#0284c7;">\${pin.income}</span></div>
                 </div>
               </div>
             \`;
@@ -334,17 +344,18 @@ export default function Home() {
   }, [ranked, city]);
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <div className="border-b border-border/80 bg-card/90">
-        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-5 px-5 py-4 md:px-8">
+    <main className="min-h-screen bg-[#fafaf9] text-slate-900 font-sans selection:bg-slate-200">
+      {/* Header */}
+      <header className="border-b border-stone-200 bg-white/95 backdrop-blur-sm sticky top-0 z-30">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 py-3.5 md:px-8">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setActiveTab('dashboard')}
-              className={`px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                 activeTab === 'dashboard'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-stone-600 hover:bg-stone-100'
               }`}
             >
               Dashboard
@@ -352,76 +363,79 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setActiveTab('methodology')}
-              className={`px-3.5 py-1.5 text-xs md:text-sm font-medium rounded-lg transition-colors ${
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors ${
                 activeTab === 'methodology'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-stone-600 hover:bg-stone-100'
               }`}
             >
               Methodology & Framework
             </button>
           </div>
+
           <div className="flex items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <Sparkles className="size-5" aria-hidden="true" />
+            <div className="grid size-9 place-items-center rounded-lg bg-slate-900 text-amber-400 shadow-sm">
+              <Sparkles className="size-4" aria-hidden="true" />
             </div>
             <div>
-              <p className="font-heading text-base font-semibold leading-tight">Who Gets Cooled?</p>
-              <p className="text-xs text-muted-foreground">Urban Heat AI Decision Sandbox</p>
+              <p className="font-serif text-base font-bold tracking-tight text-slate-900 leading-tight">Who Gets Cooled?</p>
+              <p className="text-[11px] text-stone-500 font-medium">Urban Heat AI Decision Sandbox</p>
             </div>
           </div>
+
           <div className="hidden items-center gap-3 sm:flex">
-            <span className="text-xs text-muted-foreground">
-              Developed by <strong className="font-semibold text-foreground">Polen Bicer</strong>
+            <span className="text-xs text-stone-500">
+              Developed by <strong className="font-semibold text-slate-900">Polen Bicer</strong>
             </span>
-            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary">
-              Research pilot · Live dataset
+            <Badge variant="outline" className="border-stone-300 bg-stone-50 text-slate-700 text-[11px] font-medium">
+              Research Pilot · Live Data
             </Badge>
           </div>
         </div>
-      </div>
+      </header>
 
       {activeTab === 'dashboard' ? (
-        <div className="mx-auto max-w-[1440px] px-5 py-7 md:px-8 md:py-10">
-          <section className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px] xl:items-end">
+        <div className="mx-auto max-w-[1400px] px-5 py-8 md:px-8 md:py-10">
+          {/* Hero Section */}
+          <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-end">
             <div className="max-w-3xl">
-              <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-primary">
-                <BrainCircuit className="size-4" aria-hidden="true" /> AI-assisted, human-governed
+              <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2410c]">
+                <BrainCircuit className="size-4" aria-hidden="true" /> Algorithmic Governance Audit
               </p>
-              <h1 className="font-heading text-3xl font-semibold tracking-[-0.035em] md:text-5xl">
+              <h1 className="font-serif text-3xl font-bold tracking-tight text-slate-950 md:text-5xl leading-tight">
                 Explore who moves up the cooling priority list—and why.
               </h1>
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
-                Who Gets Cooled? is an open research prototype and decision-audit tool investigating the intersection of algorithmic governance, urban climate adaptation, and environmental justice. By auditing how local governments in Brussels and Amsterdam deploy data-driven cooling strategies, this project examines whether AI-assisted climate interventions protect the most vulnerable populations or reinforce spatial inequalities.
+              <p className="mt-4 text-sm leading-relaxed text-stone-600 md:text-base">
+                An open research prototype investigating the intersection of algorithmic governance, urban climate adaptation, and environmental justice. By auditing how local governments in Brussels and Amsterdam deploy data-driven cooling interventions, this tool examines whether AI-assisted allocation protects the most vulnerable populations or reinforces spatial inequalities.
               </p>
-              <p className="mt-4 inline-flex items-center rounded-full border border-primary/15 bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
-                Developed by&nbsp;<strong className="font-semibold text-foreground">Polen Bicer</strong>
+              <p className="mt-4 inline-flex items-center rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-600 shadow-xs">
+                Developed by&nbsp;<strong className="font-semibold text-slate-900">Polen Bicer</strong>
               </p>
             </div>
 
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-stone-400" aria-hidden="true" />
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search a neighbourhood…"
                 aria-label="Search a neighbourhood"
-                className="h-11 bg-card pl-10 shadow-sm"
+                className="h-11 bg-white border-stone-300 pl-10 shadow-xs text-sm rounded-lg focus-visible:ring-slate-900"
               />
               {matches.length > 0 && (
-                <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border bg-popover p-1 shadow-xl">
+                <div className="absolute z-20 mt-1.5 w-full overflow-hidden rounded-lg border border-stone-200 bg-white p-1 shadow-lg">
                   {matches.map((match) => (
                     <button
                       key={`${match.city}-${match.name}`}
                       type="button"
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm hover:bg-accent"
+                      className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-medium hover:bg-stone-100"
                       onClick={() => {
                         setCity(match.city);
                         setQuery('');
                       }}
                     >
-                      <span>{match.name}</span>
-                      <span className="text-xs text-muted-foreground">{match.city}</span>
+                      <span className="text-slate-900 font-semibold">{match.name}</span>
+                      <span className="text-stone-500">{match.city}</span>
                     </button>
                   ))}
                 </div>
@@ -429,34 +443,34 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Interactive Weight Policy Simulator */}
-          <div className="p-5 mb-6 rounded-2xl border border-border bg-card shadow-sm">
+          {/* Interactive Weight Simulator */}
+          <div className="p-5 mb-6 rounded-xl border border-stone-200 bg-white shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="font-semibold text-base text-foreground flex items-center gap-2">
-                  <Sliders className="size-4 text-primary" /> Interactive Policy Weight Simulator
+                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
+                  <Sliders className="size-4 text-[#c2410c]" /> Policy Weight Allocation Simulator
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Adjust custom weights dynamically to audit how algorithmic scoring shifts municipal priority rankings.
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Adjust custom parameter weights to audit how algorithmic scoring shifts municipal priority rankings.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCustomWeights(!isCustomWeights)}
-                className={`text-xs px-3.5 py-2 rounded-lg font-medium transition-colors shadow-sm ${
-                  isCustomWeights ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                className={`text-xs px-3.5 py-1.5 rounded-md font-semibold transition-all shadow-xs ${
+                  isCustomWeights ? 'bg-slate-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
                 }`}
               >
-                {isCustomWeights ? '✓ Custom Weights Active' : 'Enable Custom Weights'}
+                {isCustomWeights ? '✓ Custom Mode Active' : 'Enable Custom Weights'}
               </button>
             </div>
 
             {isCustomWeights && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-border/50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-stone-100">
                 <div>
                   <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="flex items-center gap-1.5"><Flame className="size-3.5 text-rose-500" /> Heat Weight</span>
-                    <span className="text-rose-500 font-bold">{heatWeight}%</span>
+                    <span className="flex items-center gap-1.5 text-stone-700"><Flame className="size-3.5 text-rose-600" /> Heat Proxy Weight</span>
+                    <span className="text-rose-700 font-bold">{heatWeight}%</span>
                   </div>
                   <input
                     type="range"
@@ -464,14 +478,14 @@ export default function Home() {
                     max="100"
                     value={heatWeight}
                     onChange={(e) => setHeatWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-rose-500"
+                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
                   />
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="flex items-center gap-1.5"><Users className="size-3.5 text-amber-500" /> Elderly (65+) Weight</span>
-                    <span className="text-amber-500 font-bold">{ageWeight}%</span>
+                    <span className="flex items-center gap-1.5 text-stone-700"><Users className="size-3.5 text-amber-600" /> Elderly (65+) Weight</span>
+                    <span className="text-amber-700 font-bold">{ageWeight}%</span>
                   </div>
                   <input
                     type="range"
@@ -479,14 +493,14 @@ export default function Home() {
                     max="100"
                     value={ageWeight}
                     onChange={(e) => setAgeWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-amber-500"
+                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
                   />
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-emerald-500" /> Low Income Weight</span>
-                    <span className="text-emerald-500 font-bold">{incomeWeight}%</span>
+                    <span className="flex items-center gap-1.5 text-stone-700"><ShieldCheck className="size-3.5 text-sky-600" /> Low Income Weight</span>
+                    <span className="text-sky-700 font-bold">{incomeWeight}%</span>
                   </div>
                   <input
                     type="range"
@@ -494,19 +508,20 @@ export default function Home() {
                     max="100"
                     value={incomeWeight}
                     onChange={(e) => setIncomeWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          <section className="mb-6 grid gap-4 rounded-2xl border bg-card p-4 shadow-sm md:grid-cols-[1fr_1fr_2fr] md:p-5">
-            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-              City
+          {/* City and Policy Presets */}
+          <section className="mb-6 grid gap-4 rounded-xl border border-stone-200 bg-white p-4 shadow-xs md:grid-cols-[1fr_1fr_2fr] md:p-5">
+            <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500">
+              Target City
               <Select value={city} onValueChange={(value) => setCity(value as City)}>
-                <SelectTrigger className="h-10 w-full bg-background text-sm font-medium normal-case tracking-normal text-foreground">
-                  <Building2 className="size-4 text-primary" aria-hidden="true" />
+                <SelectTrigger className="h-10 w-full bg-stone-50 border-stone-200 text-xs font-semibold text-slate-900">
+                  <Building2 className="size-3.5 text-slate-700 mr-1" aria-hidden="true" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -516,11 +531,11 @@ export default function Home() {
               </Select>
             </label>
 
-            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.09em] text-muted-foreground">
-              Preset Policy rule
+            <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500">
+              Policy Rule Preset
               <Select disabled={isCustomWeights} value={scenario} onValueChange={(value) => setScenario(value as Scenario)}>
-                <SelectTrigger className="h-10 w-full bg-background text-sm font-medium normal-case tracking-normal text-foreground">
-                  <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
+                <SelectTrigger className="h-10 w-full bg-stone-50 border-stone-200 text-xs font-semibold text-slate-900">
+                  <ShieldCheck className="size-3.5 text-slate-700 mr-1" aria-hidden="true" />
                   <SelectValue>{isCustomWeights ? 'Custom Weights Mode' : rule.label}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -531,44 +546,44 @@ export default function Home() {
               </Select>
             </label>
 
-            <div className="rounded-xl bg-secondary px-4 py-3">
+            <div className="rounded-lg bg-stone-50 border border-stone-200/80 px-4 py-2.5 flex flex-col justify-center">
               {isCustomWeights ? (
                 <div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <span className="text-sm font-semibold text-primary">Custom Simulation Active:</span>
-                    <span className="text-xs text-muted-foreground">{heatWeight}% Heat / {ageWeight}% Age / {incomeWeight}% Income</span>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="text-xs font-bold text-slate-900">Dynamic User Weights:</span>
+                    <span className="text-xs text-stone-600">{heatWeight}% Heat · {ageWeight}% Age · {incomeWeight}% Income</span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">Priority rankings below are reflecting dynamic user weights.</p>
+                  <p className="mt-0.5 text-[11px] text-stone-500">Rankings below reflect real-time user-defined criteria.</p>
                 </div>
               ) : (
                 <div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <div className="flex items-center gap-2"><Flame className="size-4 text-rose-600" /><span className="text-sm font-semibold">{Math.round(rule.heatWeight * 100)}% heat</span></div>
-                    <div className="flex items-center gap-2"><Users className="size-4 text-emerald-700" /><span className="text-sm font-semibold">{Math.round(rule.socialWeight * 100)}% social vulnerability</span></div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                    <span className="font-semibold text-rose-700">{Math.round(rule.heatWeight * 100)}% Heat Weight</span>
+                    <span className="font-semibold text-slate-700">{Math.round(rule.socialWeight * 100)}% Social Vulnerability</span>
                   </div>
-                  <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{rule.note}</p>
+                  <p className="mt-1 text-[11px] text-stone-500 leading-tight">{rule.note}</p>
                 </div>
               )}
             </div>
           </section>
 
-          {/* REAL INTERACTIVE GEOGRAPHIC MAP */}
-          <div className="p-5 mb-6 rounded-2xl border border-border bg-card shadow-sm">
+          {/* OpenStreetMap Real Geographic View */}
+          <div className="p-5 mb-6 rounded-xl border border-stone-200 bg-white shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
-                <h3 className="font-semibold text-base text-foreground flex items-center gap-2">
-                  <Layers className="size-4 text-primary" /> Geographic Exposure Map ({city})
+                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
+                  <Layers className="size-4 text-[#c2410c]" /> Spatial Exposure & Risk Map ({city})
                 </h3>
-                <p className="text-xs text-muted-foreground">Real-world spatial map powered by OpenStreetMap & CartoDB. Click markers for vulnerability details.</p>
+                <p className="text-xs text-stone-500">Real geographic map powered by OpenStreetMap. Click markers to inspect metrics.</p>
               </div>
               <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-rose-600 inline-block"></span> High Priority</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate Priority</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-emerald-600 inline-block"></span> Lower Priority</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-red-600 inline-block"></span> High Risk</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-slate-600 inline-block"></span> Lower Baseline</span>
               </div>
             </div>
 
-            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-border shadow-inner">
+            <div className="w-full h-[380px] rounded-lg overflow-hidden border border-stone-200 shadow-inner">
               <iframe
                 title="Geographic Risk Map"
                 srcDoc={mapHtml}
@@ -577,49 +592,52 @@ export default function Home() {
             </div>
           </div>
 
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.65fr)]">
-            <Card className="border-0 shadow-[0_12px_35px_rgba(21,54,43,0.08)] ring-1 ring-border">
-              <CardHeader className="border-b">
+          {/* Priority Ranking & Top Priority */}
+          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
+            <Card className="border border-stone-200 bg-white shadow-xs">
+              <CardHeader className="border-b border-stone-100 pb-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <CardTitle className="text-lg">Neighbourhood priority ranking</CardTitle>
-                    <CardDescription>Scores are relative within {city}; 5 is the highest priority.</CardDescription>
+                    <CardTitle className="text-base font-bold text-slate-900">Neighbourhood Priority Ranking</CardTitle>
+                    <CardDescription className="text-xs text-stone-500">City-relative score index (5 = highest intervention urgency).</CardDescription>
                   </div>
-                  <Badge className="bg-primary/10 text-primary hover:bg-primary/10">
+                  <Badge variant="outline" className="border-stone-300 bg-stone-50 text-slate-800 text-xs">
                     {isCustomWeights ? 'Custom Weights' : rule.label}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="pt-5">
-                <ChartContainer config={chartConfig} className="h-[300px] w-full aspect-auto md:h-[360px]">
+                <ChartContainer config={chartConfig} className="h-[280px] w-full aspect-auto md:h-[340px]">
                   <BarChart data={ranked} layout="vertical" margin={{ left: 8, right: 22, top: 4, bottom: 4 }}>
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-                    <XAxis type="number" domain={[0, 5]} tickCount={6} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" width={145} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
-                    <ChartTooltip cursor={{ fill: 'var(--secondary)' }} content={<ChartTooltipContent hideLabel />} />
-                    <Bar dataKey="score" fill="var(--color-score)" radius={[0, 7, 7, 0]} barSize={28} />
+                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis type="number" domain={[0, 5]} tickCount={6} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
+                    <YAxis dataKey="name" type="category" width={145} axisLine={false} tickLine={false} tick={{ fill: '#0f172a', fontSize: 11, fontWeight: 500 }} />
+                    <ChartTooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTooltipContent hideLabel />} />
+                    <Bar dataKey="score" fill="#c2410c" radius={[0, 6, 6, 0]} barSize={26} />
                   </BarChart>
                 </ChartContainer>
 
-                <div className="mt-5 overflow-hidden rounded-xl border">
+                <div className="mt-5 overflow-hidden rounded-lg border border-stone-200">
                   <Table>
-                    <TableHeader className="bg-secondary/70">
-                      <TableRow>
-                        <TableHead className="w-14">Rank</TableHead>
-                        <TableHead>Neighbourhood</TableHead>
-                        <TableHead className="hidden lg:table-cell">AI vulnerability profile</TableHead>
-                        <TableHead className="text-right">Score</TableHead>
+                    <TableHeader className="bg-stone-50">
+                      <TableRow className="border-stone-200">
+                        <TableHead className="w-14 text-xs font-bold text-stone-600">Rank</TableHead>
+                        <TableHead className="text-xs font-bold text-stone-600">Neighbourhood</TableHead>
+                        <TableHead className="hidden lg:table-cell text-xs font-bold text-stone-600">AI Vulnerability Profile</TableHead>
+                        <TableHead className="text-right text-xs font-bold text-stone-600">Score</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {ranked.map((area) => (
-                        <TableRow key={area.name}>
-                          <TableCell className="font-mono text-muted-foreground">{area.rank}</TableCell>
-                          <TableCell className="font-medium">{area.name}</TableCell>
+                        <TableRow key={area.name} className="border-stone-100 hover:bg-stone-50/60">
+                          <TableCell className="font-mono text-xs text-stone-500 font-semibold">{area.rank}</TableCell>
+                          <TableCell className="font-semibold text-slate-900 text-xs">{area.name}</TableCell>
                           <TableCell className="hidden lg:table-cell">
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs ring-1 ring-inset ${profileTone(area.profile)}`}>{area.profile}</span>
+                            <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium border ${profileTone(area.profile)}`}>
+                              {area.profile}
+                            </span>
                           </TableCell>
-                          <TableCell className="text-right font-mono font-semibold">{area.score.toFixed(2)}</TableCell>
+                          <TableCell className="text-right font-mono font-bold text-slate-900 text-xs">{area.score.toFixed(2)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -629,119 +647,125 @@ export default function Home() {
             </Card>
 
             <div className="grid content-start gap-5">
-              <Card className="border-0 bg-primary text-primary-foreground shadow-[0_18px_45px_rgba(20,69,53,0.22)] ring-0">
-                <CardHeader>
-                  <p className="text-xs font-semibold uppercase tracking-[0.13em] text-primary-foreground/70">Top priority under this rule</p>
-                  <CardTitle className="text-2xl">{top.name}</CardTitle>
-                  <CardDescription className="text-primary-foreground/70">{city} · score {top.score ? top.score.toFixed(2) : 'N/A'}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      ['Heat', top.heat],
-                      ['Age', top.age],
-                      ['Income', top.income],
-                    ].map(([label, value]) => (
-                      <div key={String(label)} className="rounded-xl bg-white/10 p-3">
-                        <p className="text-[11px] text-primary-foreground/65">{label}</p>
-                        <p className="mt-1 font-mono text-lg font-semibold">{Number(value).toFixed(2)}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-start gap-2 rounded-xl bg-white/10 p-3 text-sm leading-5">
-                    <BrainCircuit className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                    <span>{top.profile}</span>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Top Priority Card */}
+              <div className="rounded-xl bg-slate-950 p-6 text-white shadow-sm border border-slate-900">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Top Priority Target</p>
+                <h3 className="mt-1 font-serif text-2xl font-bold">{top.name}</h3>
+                <p className="text-xs text-slate-400">{city} · score {top.score ? top.score.toFixed(2) : 'N/A'}</p>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Info className="size-4 text-primary" /> Where AI enters</CardTitle>
-                  <CardDescription>The model supports one stage of the chain; it does not make the final decision.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3">
+                <div className="mt-5 grid grid-cols-3 gap-2.5">
                   {[
-                    ['Public data', 'Heat, age and income indicators'],
-                    ['AI profiling', 'K-means identifies similar risk patterns'],
-                    ['Human values', 'Officials choose the policy weights'],
-                    ['Public decision', 'Local knowledge and deliberation remain decisive'],
+                    ['Heat Proxy', top.heat, 'text-rose-400'],
+                    ['Elderly (65+)', top.age, 'text-amber-400'],
+                    ['Low Income', top.income, 'text-sky-400'],
+                  ].map(([label, value, colorClass]) => (
+                    <div key={String(label)} className="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800 text-center">
+                      <p className="text-[10px] text-slate-400">{label}</p>
+                      <p className={`mt-0.5 font-mono text-base font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-slate-900/80 p-3 text-xs leading-relaxed border border-slate-800 text-slate-300">
+                  <BrainCircuit className="mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true" />
+                  <span>{top.profile}</span>
+                </div>
+              </div>
+
+              {/* Where AI Enters */}
+              <Card className="border border-stone-200 bg-white shadow-xs">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <Info className="size-4 text-[#c2410c]" /> Where AI Enters Decision-Making
+                  </CardTitle>
+                  <CardDescription className="text-xs text-stone-500">The model structures allocation evidence; democratic oversight decides.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-3 pt-1">
+                  {[
+                    ['Public Data Ingestion', 'Satellite thermal indices, tree canopy coverage, census data'],
+                    ['Algorithmic Profiling', 'Pattern clustering identifies overlapping vulnerability types'],
+                    ['Human Policy Weights', 'Elected officials select normative weighting priorities'],
+                    ['Democratic Legitimacy', 'Citizen deliberation remains the final decisive arbiter'],
                   ].map(([title, description], index) => (
-                    <div key={title} className="flex gap-3">
-                      <div className="grid size-7 shrink-0 place-items-center rounded-full bg-secondary font-mono text-xs font-semibold text-primary">{index + 1}</div>
-                      <div>
-                        <p className="text-sm font-semibold">{title}</p>
-                        <p className="text-xs leading-5 text-muted-foreground">{description}</p>
+                    <div key={title} className="flex gap-3 items-center">
+                      <div className="grid size-6 shrink-0 place-items-center rounded-md bg-stone-100 font-mono text-xs font-bold text-slate-900">
+                        {index + 1}
                       </div>
-                      {index < 3 && <ArrowRight className="ml-auto mt-1 hidden size-4 text-border sm:block" aria-hidden="true" />}
+                      <div>
+                        <p className="text-xs font-bold text-slate-900">{title}</p>
+                        <p className="text-[11px] text-stone-500">{description}</p>
+                      </div>
+                      {index < 3 && <ArrowRight className="ml-auto size-3 text-stone-300 hidden sm:block" />}
                     </div>
                   ))}
                 </CardContent>
               </Card>
 
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
-                <p className="flex items-center gap-2 text-sm font-semibold"><Info className="size-4" /> Important limitation</p>
-                <p className="mt-2 text-xs leading-5 text-amber-900/80">
-                  This proof of concept uses selected neighbourhoods and proxy indicators—not measured local temperature. Results are exploratory, city-relative and should support, never replace, democratic decision-making.
+              {/* Notice */}
+              <div className="rounded-xl border border-stone-200 bg-stone-100/70 p-4 text-slate-800 text-xs">
+                <p className="flex items-center gap-1.5 font-bold text-slate-900"><Info className="size-3.5 text-stone-600" /> Methodological Note</p>
+                <p className="mt-1 text-[11px] text-stone-600 leading-relaxed">
+                  This research proof-of-concept calculates spatial priority based on proxy indicators rather than in-situ sensor telemetry. It is intended to audit algorithmic bias and enhance deliberative governance.
                 </p>
               </div>
             </div>
           </section>
         </div>
       ) : (
+        /* Methodology Tab */
         <div className="mx-auto max-w-[1200px] px-5 py-10 md:px-8">
           <div className="mb-10 text-center md:text-left">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground font-heading">
+            <h2 className="text-3xl font-serif font-bold tracking-tight text-slate-950">
               Methodology & Analytical Framework
             </h2>
-            <p className="mt-3 text-base text-muted-foreground max-w-3xl">
-              This research prototype investigates the algorithmic governance of urban heat adaptation, focusing on how data-driven interventions are justified, deployed, and audited across socio-spatial inequalities in Brussels and Amsterdam.
+            <p className="mt-3 text-sm md:text-base text-stone-600 max-w-3xl leading-relaxed">
+              This research prototype investigates the algorithmic governance of urban heat adaptation, auditing how data-driven climate interventions are justified and deployed across socio-spatial inequalities in Brussels and Amsterdam.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
               <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">01</span>
-                <h3 className="font-semibold text-lg text-foreground">Socio-Spatial Environmental Justice</h3>
+                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">01</span>
+                <h3 className="font-bold text-base text-slate-900">Socio-Spatial Environmental Justice</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
                 Urban heat islands (UHI) disproportionately affect socially vulnerable neighborhoods with lower tree canopy density and higher building density. This prototype maps surface temperature anomalies against socio-economic vulnerability indicators to audit cooling disparities.
               </p>
             </div>
 
-            <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
               <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">02</span>
-                <h3 className="font-semibold text-lg text-foreground">Algorithmic Legitimacy Chain</h3>
+                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">02</span>
+                <h3 className="font-bold text-base text-slate-900">Algorithmic Legitimacy Chain</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
                 Drawing on Fritz Scharpf and Vivien Schmidt&apos;s legitimacy framework, policies are evaluated across:
               </p>
-              <ul className="mt-3 space-y-1.5 text-xs text-muted-foreground list-disc list-inside">
-                <li><strong>Input Legitimacy:</strong> Citizen participation, deliberative processes, and vulnerable group inclusion.</li>
-                <li><strong>Throughput Legitimacy:</strong> Procedural transparency, algorithm register disclosures, and legal oversight.</li>
-                <li><strong>Output Legitimacy:</strong> Measurable heat reduction and efficiency claims in municipal action plans.</li>
+              <ul className="mt-3 space-y-1.5 text-xs text-stone-600 list-disc list-inside">
+                <li><strong>Input Legitimacy:</strong> Citizen participation and vulnerable community inclusion.</li>
+                <li><strong>Throughput Legitimacy:</strong> Procedural transparency and algorithmic register oversight.</li>
+                <li><strong>Output Legitimacy:</strong> Measurable heat mitigation and public welfare outcomes.</li>
               </ul>
             </div>
 
-            <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
               <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">03</span>
-                <h3 className="font-semibold text-lg text-foreground">Comparative Case Strategy</h3>
+                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">03</span>
+                <h3 className="font-bold text-base text-slate-900">Comparative Case Strategy</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                <strong>Brussels Capital Region:</strong> Multi-level regional governance, FARI AI for Common Good Institute, and Bruxelles Environnement climate resilience initiatives.<br className="mb-2"/>
-                <strong>Amsterdam:</strong> Pioneering algorithmic transparency via the Amsterdam Algorithm Register and automated spatial decision tools.
+              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
+                <strong>Brussels Capital Region:</strong> Multi-level governance, FARI AI for Common Good Institute, and Bruxelles Environnement climate resilience frameworks.<br className="mb-2"/>
+                <strong>Amsterdam:</strong> Pioneering algorithmic disclosure via the Amsterdam Algorithm Register and automated spatial decision tools.
               </p>
             </div>
 
-            <div className="p-6 rounded-xl border border-border bg-card shadow-sm">
+            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
               <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-lg bg-primary/10 text-primary font-bold text-sm">04</span>
-                <h3 className="font-semibold text-lg text-foreground">Data Pipeline & Decision Audit</h3>
+                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">04</span>
+                <h3 className="font-bold text-base text-slate-900">Data Pipeline & Decision Audit</h3>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
                 The decision-support audit cross-references satellite thermal observations (Copernicus Land Monitoring Service), municipal tree inventory data, and census-level socioeconomic vulnerability to calculate the <em>Cooling Priority Index</em>.
               </p>
             </div>
