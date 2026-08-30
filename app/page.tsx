@@ -125,45 +125,9 @@ const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
   Izmir: { lat: 38.4200, lng: 27.1400, zoom: 11 },
 };
 
-const defaultNeighbourhoods: Neighbourhood[] = [
-  // Brussels
-  { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.54, income: 5, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Cureghem Bara', heat: 5, age: 1, income: 4.95, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Châtelain', heat: 4.23, age: 1.35, income: 2.56, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: "Vivier d'Oie", heat: 1, age: 5, income: 1, profile: 'Age vulnerability + lower heat' },
-  { city: 'Brussels', name: 'Schaerbeek (Helmet)', heat: 4.10, age: 2.10, income: 4.30, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Matonge', heat: 4.45, age: 1.80, income: 3.90, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Laeken (Centre)', heat: 3.80, age: 2.40, income: 3.80, profile: 'Moderate socio-spatial risk' },
-  { city: 'Brussels', name: 'Saint-Gilles', heat: 4.30, age: 1.70, income: 3.60, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Flagey - Malibran', heat: 3.90, age: 2.05, income: 2.80, profile: 'Moderate socio-spatial risk' },
-  
-  // Amsterdam
-  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5.00, age: 1.89, income: 4.90, profile: 'High heat + income vulnerability' },
-  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.17, age: 1.00, income: 5.00, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.46, age: 1.30, income: 4.62, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.08, age: 4.23, income: 1.00, profile: 'Age vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1.00, age: 5.00, income: 3.97, profile: 'Age vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Nieuw-West', heat: 2.40, age: 2.80, income: 4.50, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Zuidoost', heat: 2.10, age: 2.20, income: 4.80, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Noord', heat: 2.60, age: 3.10, income: 3.70, profile: 'Moderate socio-spatial risk' },
-  { city: 'Amsterdam', name: 'Oost', heat: 3.50, age: 2.40, income: 3.20, profile: 'Moderate socio-spatial risk' },
-  { city: 'Amsterdam', name: 'Centrum', heat: 4.80, age: 2.10, income: 2.50, profile: 'High heat exposure' },
-
-  // Istanbul
-  { city: 'Istanbul', name: 'Fatih', heat: 4.85, age: 3.80, income: 4.70, profile: 'High density historic core + socioeconomic vulnerability' },
-  { city: 'Istanbul', name: 'Bağcılar', heat: 5.00, age: 1.20, income: 5.00, profile: 'Extreme impervious surface + low income vulnerability' },
-  { city: 'Istanbul', name: 'Kadıköy', heat: 3.40, age: 5.00, income: 1.20, profile: 'High age vulnerability + coastal heat exposure' },
-  { city: 'Istanbul', name: 'Sarıyer', heat: 1.00, age: 2.60, income: 1.00, profile: 'Northern green corridor + lower thermal risk' },
-  { city: 'Istanbul', name: 'Esenyurt', heat: 4.50, age: 1.00, income: 4.80, profile: 'High residential mass + income vulnerability' },
-
-  // Izmir
-  { city: 'Izmir', name: 'Konak', heat: 4.90, age: 3.60, income: 4.80, profile: 'Historic central basin + severe UHI & income vulnerability' },
-  { city: 'Izmir', name: 'Buca', heat: 4.70, age: 2.10, income: 4.20, profile: 'Dense urban fabric + moderate-to-low income vulnerability' },
-  { city: 'Izmir', name: 'Karşıyaka', heat: 3.20, age: 5.00, income: 1.40, profile: 'High elderly demographic vulnerability + coastal exposure' },
-  { city: 'Izmir', name: 'Bornova', heat: 4.20, age: 2.50, income: 3.60, profile: 'Inland plain thermal accumulation + mixed profile' },
-  { city: 'Izmir', name: 'Balçova', heat: 1.00, age: 4.10, income: 1.60, profile: 'Thermal/green microclimate buffer + lower physical heat' },
-];
+useEffect(() => {
+    setData(defaultNeighbourhoods);
+  }, []);
 
 function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
   const rawLines = csvText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
