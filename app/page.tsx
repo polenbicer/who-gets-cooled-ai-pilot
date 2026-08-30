@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BrainCircuit,
   Building2,
-  CheckCircle2,
   FileSpreadsheet,
   Flame,
   Info,
@@ -568,33 +567,8 @@ export default function Home() {
             </div>
           </section>
 
-          {/* OpenStreetMap Real Geographic View */}
-          <div className="p-5 mb-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-              <div>
-                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
-                  <Layers className="size-4 text-[#c2410c]" /> Spatial Exposure & Risk Map ({city})
-                </h3>
-                <p className="text-xs text-stone-500">Real geographic map powered by OpenStreetMap. Click markers to inspect metrics.</p>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-red-600 inline-block"></span> High Risk</span>
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate</span>
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-slate-600 inline-block"></span> Lower Baseline</span>
-              </div>
-            </div>
-
-            <div className="w-full h-[380px] rounded-lg overflow-hidden border border-stone-200 shadow-inner">
-              <iframe
-                title="Geographic Risk Map"
-                srcDoc={mapHtml}
-                className="w-full h-full border-0"
-              />
-            </div>
-          </div>
-
-          {/* Priority Ranking & Top Priority */}
-          <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
+          {/* 1. SECTION: Priority Ranking & Top Priority Target */}
+          <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
             <Card className="border border-stone-200 bg-white shadow-xs">
               <CardHeader className="border-b border-stone-100 pb-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -648,7 +622,7 @@ export default function Home() {
             </Card>
 
             <div className="grid content-start gap-5">
-              {/* Top Priority Card */}
+              {/* Top Priority Target Card */}
               <div className="rounded-xl bg-slate-950 p-6 text-white shadow-sm border border-slate-900">
                 <p className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Top Priority Target</p>
                 <h3 className="mt-1 font-serif text-2xl font-bold">{top.name}</h3>
@@ -711,9 +685,34 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {/* 2. SECTION: OpenStreetMap Real Geographic View (Artık Tabloların ve Kartların Altında) */}
+          <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
+                  <Layers className="size-4 text-[#c2410c]" /> Spatial Exposure & Risk Map ({city})
+                </h3>
+                <p className="text-xs text-stone-500">Real geographic map powered by OpenStreetMap. Click markers to inspect metrics.</p>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-red-600 inline-block"></span> High Risk</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-slate-600 inline-block"></span> Lower Baseline</span>
+              </div>
+            </div>
+
+            <div className="w-full h-[420px] rounded-lg overflow-hidden border border-stone-200 shadow-inner">
+              <iframe
+                title="Geographic Risk Map"
+                srcDoc={mapHtml}
+                className="w-full h-full border-0"
+              />
+            </div>
+          </div>
         </div>
       ) : (
-        /* EXPANDED METHODOLOGY & ANALYTICAL FRAMEWORK TAB */
+        /* METHODOLOGY & ANALYTICAL FRAMEWORK TAB */
         <div className="mx-auto max-w-[1240px] px-5 py-10 md:px-8">
           <div className="mb-10 text-center md:text-left">
             <Badge variant="outline" className="mb-3 border-stone-300 bg-stone-100 text-stone-700 text-xs font-medium">
@@ -727,7 +726,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Section 1: Data Operationalisation & Metric Rationale */}
+          {/* Section 1: Data Operationalisation */}
           <div className="mb-12">
             <h3 className="text-lg font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
               <FileSpreadsheet className="size-5 text-[#c2410c]" /> 1. Data Operationalisation & Indicator Rationale
@@ -737,7 +736,6 @@ export default function Home() {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Metric 1: Heat Proxy */}
               <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
@@ -753,7 +751,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Metric 2: Elderly Vulnerability */}
               <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
@@ -769,7 +766,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Metric 3: Income Vulnerability */}
               <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <div className="p-2 rounded-lg bg-sky-50 text-sky-600">
@@ -832,7 +828,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Section 3: Comparative Urban Governance Case Strategy */}
+          {/* Section 3: Comparative Urban Governance Context */}
           <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
             <h3 className="text-base font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
               <Building2 className="size-4 text-[#c2410c]" /> 3. Comparative Urban Governance Context
