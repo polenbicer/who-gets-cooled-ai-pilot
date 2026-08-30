@@ -450,13 +450,30 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-lg bg-slate-900 text-amber-400 shadow-sm">
-              <Sparkles className="size-4" aria-hidden="true" />
+         <div className="flex items-center gap-3">
+            {/* The Urban Heat Matrix Custom Logo */}
+            <div className="grid size-10 place-items-center rounded-xl bg-slate-950 p-2 shadow-xs border border-slate-800">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Top Row: Hot Thermal Blocks */}
+                <rect x="2" y="2" width="5.5" height="5.5" rx="1.5" fill="#e11d48" />
+                <rect x="9.25" y="2" width="5.5" height="5.5" rx="1.5" fill="#f97316" />
+                <rect x="16.5" y="2" width="5.5" height="5.5" rx="1.5" fill="#e11d48" />
+                
+                {/* Middle Row: The Algorithmic Cooled Oasis in the Center */}
+                <rect x="2" y="9.25" width="5.5" height="5.5" rx="1.5" fill="#f97316" />
+                <rect x="9.25" y="9.25" width="5.5" height="5.5" rx="1.5" fill="#38bdf8" stroke="#ffffff" strokeWidth="1" />
+                <rect x="16.5" y="9.25" width="5.5" height="5.5" rx="1.5" fill="#fbbf24" />
+                
+                {/* Bottom Row: Peripheral Exposure */}
+                <rect x="2" y="16.5" width="5.5" height="5.5" rx="1.5" fill="#e11d48" />
+                <rect x="9.25" y="16.5" width="5.5" height="5.5" rx="1.5" fill="#fbbf24" />
+                <rect x="16.5" y="16.5" width="5.5" height="5.5" rx="1.5" fill="#e11d48" />
+              </svg>
             </div>
+
             <div>
               <p className="font-serif text-base font-bold tracking-tight text-slate-900 leading-tight">Who Gets Cooled?</p>
-<p className="text-[11px] text-stone-500 font-medium">Critical Data & Urban AI Audit Sandbox</p>
+              <p className="text-[11px] text-stone-500 font-medium">Critical Data &amp; Urban AI Audit Sandbox</p>
             </div>
           </div>
 
