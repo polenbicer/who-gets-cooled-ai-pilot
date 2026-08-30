@@ -99,21 +99,42 @@ function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
   const lines = csvText.trim().split('\n');
   if (lines.length <= 1) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
   const cityIdx = headers.indexOf('city');
   const nameIdx = headers.indexOf('area_name');
   const heatIdx = headers.indexOf('relative_heat_proxy_score_1_5');
   const ageIdx = headers.indexOf('age_vulnerability_score_1_5');
   const incomeIdx = headers.indexOf('income_vulnerability_score_1_5');
-  const notesIdx = headers.indexOf('notes');
+  
+  // Profil sütununu eşle (notes, profile, cluster veya ai_profile)
+  let profileIdx = headers.indexOf('ai_vulnerability_profile');
+  if (profileIdx === -1) profileIdx = headers.indexOf('notes');
+  if (profileIdx === -1) profileIdx = headers.indexOf('profile');
+  if (profileIdx === -1) profileIdx = headers.indexOf('cluster');
+
   const latIdx = headers.indexOf('lat');
   const lngIdx = headers.indexOf('lng');
 
   return lines.slice(1).map(line => {
-    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    // Virgül ayrımı sırasında tırnak içindeki metinleri koruyarak böl
+    const values = (line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(','))
+      .map(v => v.trim().replace(/^"|"$/g, ''));
+
     const cityRaw = values[cityIdx] || 'Brussels';
     const city: City = cityRaw.toLowerCase().includes('amsterdam') ? 'Amsterdam' : 'Brussels';
     const name = values[nameIdx] || 'Unknown';
+
+    // Profil metni sayı/yıl gelirse puanlara göre doğru profili otomatik ata
+    let rawProfile = profileIdx !== -1 ? values[profileIdx] : '';
+    if (!rawProfile || !isNaN(Number(rawProfile))) {
+      const h = parseFloat(values[heatIdx]) || 1;
+      const a = parseFloat(values[ageIdx]) || 1;
+      const i = parseFloat(values[incomeIdx]) || 1;
+      if (h >= 4 && i >= 4) rawProfile = 'High heat + income vulnerability';
+      else if (a >= 4) rawProfile = 'Age vulnerability + lower heat';
+      else if (i >= 4) rawProfile = 'Income vulnerability + lower heat';
+      else rawProfile = 'Moderate baseline exposure';
+    }
 
     return {
       city,
@@ -121,7 +142,7 @@ function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
       heat: parseFloat(values[heatIdx]) || 1,
       age: parseFloat(values[ageIdx]) || 1,
       income: parseFloat(values[incomeIdx]) || 1,
-      profile: values[notesIdx] || 'Socio-spatial heat exposure profile',
+      profile: rawProfile,
       lat: latIdx !== -1 && values[latIdx] ? parseFloat(values[latIdx]) : undefined,
       lng: lngIdx !== -1 && values[lngIdx] ? parseFloat(values[lngIdx]) : undefined,
     };
