@@ -7,6 +7,7 @@ import {
   Building2,
   Flame,
   Info,
+  Layers,
   Search,
   ShieldCheck,
   Sparkles,
@@ -56,34 +57,42 @@ type Neighbourhood = {
   age: number;
   income: number;
   profile: string;
+  lat?: number;
+  lng?: number;
 };
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREdQHMp0P_JjheI_LaV__Ds8AhETMiRwH3BX9GUIbwHTG_Y0JmAim-at3d4whwILQxOYJLws28-fjH/pub?output=csv";
 
-const NEIGHBOURHOOD_COORDS: Record<string, { x: number; y: number }> = {
+// Varsayılan coğrafi enlem/boylam koordinatları
+const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   // Brussels
-  'Marolles': { x: 46, y: 56 },
-  'Molenbeek Historique': { x: 36, y: 42 },
-  'Cureghem Bara': { x: 38, y: 64 },
-  'Châtelain': { x: 56, y: 68 },
-  "Vivier d'Oie": { x: 62, y: 88 },
-  'Schaerbeek (Helmet)': { x: 66, y: 30 },
-  'Matonge': { x: 55, y: 58 },
-  'Laeken (Centre)': { x: 42, y: 22 },
-  'Saint-Gilles': { x: 48, y: 68 },
-  'Flagey - Malibran': { x: 60, y: 65 },
+  'Marolles': { lat: 50.8385, lng: 4.3468 },
+  'Molenbeek Historique': { lat: 50.8546, lng: 4.3340 },
+  'Cureghem Bara': { lat: 50.8402, lng: 4.3308 },
+  'Châtelain': { lat: 50.8242, lng: 4.3601 },
+  "Vivier d'Oie": { lat: 50.7892, lng: 4.3755 },
+  'Schaerbeek (Helmet)': { lat: 50.8690, lng: 4.3780 },
+  'Matonge': { lat: 50.8378, lng: 4.3645 },
+  'Laeken (Centre)': { lat: 50.8752, lng: 4.3540 },
+  'Saint-Gilles': { lat: 50.8280, lng: 4.3450 },
+  'Flagey - Malibran': { lat: 50.8285, lng: 4.3725 },
 
   // Amsterdam
-  'Amsterdamse Poort e.o.': { x: 76, y: 78 },
-  'De Kolenkit': { x: 32, y: 48 },
-  'Burgwallen-Oude Zijde': { x: 50, y: 44 },
-  'Apollobuurt': { x: 46, y: 66 },
-  'Buitenveldert-West': { x: 42, y: 82 },
-  'Nieuw-West': { x: 28, y: 58 },
-  'Zuidoost': { x: 74, y: 74 },
-  'Noord': { x: 54, y: 24 },
-  'Oost': { x: 68, y: 52 },
-  'Centrum': { x: 50, y: 46 },
+  'Amsterdamse Poort e.o.': { lat: 52.3145, lng: 4.9542 },
+  'De Kolenkit': { lat: 52.3785, lng: 4.8480 },
+  'Burgwallen-Oude Zijde': { lat: 52.3718, lng: 4.8980 },
+  'Apollobuurt': { lat: 52.3485, lng: 4.8770 },
+  'Buitenveldert-West': { lat: 52.3275, lng: 4.8620 },
+  'Nieuw-West': { lat: 52.3610, lng: 4.8150 },
+  'Zuidoost': { lat: 52.3110, lng: 4.9650 },
+  'Noord': { lat: 52.3990, lng: 4.9250 },
+  'Oost': { lat: 52.3580, lng: 4.9350 },
+  'Centrum': { lat: 52.3702, lng: 4.8952 },
+};
+
+const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
+  Brussels: { lat: 50.8420, lng: 4.3550, zoom: 12 },
+  Amsterdam: { lat: 52.3550, lng: 4.8950, zoom: 12 },
 };
 
 function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
@@ -97,19 +106,24 @@ function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
   const ageIdx = headers.indexOf('age_vulnerability_score_1_5');
   const incomeIdx = headers.indexOf('income_vulnerability_score_1_5');
   const notesIdx = headers.indexOf('notes');
+  const latIdx = headers.indexOf('lat');
+  const lngIdx = headers.indexOf('lng');
 
   return lines.slice(1).map(line => {
     const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
     const cityRaw = values[cityIdx] || 'Brussels';
     const city: City = cityRaw.toLowerCase().includes('amsterdam') ? 'Amsterdam' : 'Brussels';
+    const name = values[nameIdx] || 'Unknown';
 
     return {
       city,
-      name: values[nameIdx] || 'Unknown',
+      name,
       heat: parseFloat(values[heatIdx]) || 1,
       age: parseFloat(values[ageIdx]) || 1,
       income: parseFloat(values[incomeIdx]) || 1,
       profile: values[notesIdx] || 'Socio-spatial heat exposure profile',
+      lat: latIdx !== -1 && values[latIdx] ? parseFloat(values[latIdx]) : undefined,
+      lng: lngIdx !== -1 && values[lngIdx] ? parseFloat(values[lngIdx]) : undefined,
     };
   });
 }
@@ -149,7 +163,6 @@ export default function Home() {
   const [city, setCity] = useState<City>('Brussels');
   const [scenario, setScenario] = useState<Scenario>('heat');
   const [query, setQuery] = useState('');
-  const [selectedPin, setSelectedPin] = useState<Neighbourhood | null>(null);
 
   // Policy Simulator Custom Weights
   const [heatWeight, setHeatWeight] = useState<number>(34);
@@ -199,6 +212,105 @@ export default function Home() {
 
   const top = ranked[0] || data[0];
   const rule = scenarios[scenario];
+
+  // Gerçek Harita Dokümanı (OpenStreetMap + CARTO Katmanı)
+  const mapHtml = useMemo(() => {
+    const center = CITY_CENTERS[city];
+    const pinsJson = JSON.stringify(
+      ranked.map(item => {
+        const lat = item.lat ?? REAL_COORDS[item.name]?.lat ?? center.lat;
+        const lng = item.lng ?? REAL_COORDS[item.name]?.lng ?? center.lng;
+        const color = item.score > 3.8 ? '#e11d48' : item.score > 2.5 ? '#d97706' : '#059669';
+        return {
+          name: item.name,
+          lat,
+          lng,
+          score: item.score.toFixed(2),
+          heat: item.heat.toFixed(2),
+          age: item.age.toFixed(2),
+          income: item.income.toFixed(2),
+          profile: item.profile,
+          color,
+        };
+      })
+    );
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          body, html { margin:0; padding:0; height:100%; width:100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+          #map { height: 100%; width: 100%; background: #f8fafc; }
+          .custom-pin {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2.5px solid #ffffff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+            cursor: pointer;
+            transition: transform 0.15s ease-in-out;
+          }
+          .custom-pin:hover { transform: scale(1.3); }
+          .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            padding: 2px;
+          }
+          .popup-title { font-weight: 700; font-size: 13.5px; margin-bottom: 3px; color: #0f172a; }
+          .popup-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; margin-bottom: 5px; }
+          .popup-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 10.5px; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+          .metric-box { text-align: center; }
+          .metric-val { font-weight: bold; font-size: 12px; display: block; }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          const map = L.map('map', { zoomControl: true }).setView([${center.lat}, ${center.lng}], ${center.zoom});
+          
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; CARTO & OpenStreetMap contributors',
+            maxZoom: 19
+          }).addTo(map);
+
+          const pins = ${pinsJson};
+
+          pins.forEach(pin => {
+            const icon = L.divIcon({
+              className: 'custom-div-icon',
+              html: \`<div class="custom-pin" style="background:\${pin.color}; width:20px; height:20px;"></div>\`,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            });
+
+            const popupContent = \`
+              <div style="min-width: 160px;">
+                <div class="popup-title">\${pin.name}</div>
+                <div class="popup-badge" style="background:\${pin.color}15; color:\${pin.color};">Priority: \${pin.score}</div>
+                <div style="font-size:10.5px; color:#64748b; line-height:1.3;">\${pin.profile}</div>
+                <div class="popup-metrics">
+                  <div class="metric-box"><span style="color:#64748b;">Heat</span><span class="metric-val" style="color:#e11d48;">\${pin.heat}</span></div>
+                  <div class="metric-box"><span style="color:#64748b;">Age</span><span class="metric-val" style="color:#d97706;">\${pin.age}</span></div>
+                  <div class="metric-box"><span style="color:#64748b;">Income</span><span class="metric-val" style="color:#059669;">\${pin.income}</span></div>
+                </div>
+              </div>
+            \`;
+
+            L.marker([pin.lat, pin.lng], { icon: icon })
+              .addTo(map)
+              .bindPopup(popupContent);
+          });
+        </script>
+      </body>
+      </html>
+    `;
+  }, [ranked, city]);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -419,92 +531,28 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Interactive Spatial Exposure Map */}
+          {/* REAL INTERACTIVE GEOGRAPHIC MAP */}
           <div className="p-5 mb-6 rounded-2xl border border-border bg-card shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
               <div>
-                <h3 className="font-semibold text-base text-foreground">Spatial Exposure Map ({city})</h3>
-                <p className="text-xs text-muted-foreground">Interactive spatial layout showing relative vulnerability. Click any node to inspect.</p>
+                <h3 className="font-semibold text-base text-foreground flex items-center gap-2">
+                  <Layers className="size-4 text-primary" /> Geographic Exposure Map ({city})
+                </h3>
+                <p className="text-xs text-muted-foreground">Real-world spatial map powered by OpenStreetMap & CartoDB. Click markers for vulnerability details.</p>
               </div>
               <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-rose-500 inline-block"></span> High Priority</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-amber-500 inline-block"></span> Moderate Priority</span>
-                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-emerald-500 inline-block"></span> Lower Priority</span>
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-rose-600 inline-block"></span> High Priority</span>
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate Priority</span>
+                <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-emerald-600 inline-block"></span> Lower Priority</span>
               </div>
             </div>
 
-            <div className="relative w-full h-[300px] bg-muted/20 rounded-xl border border-border/50 overflow-hidden flex items-center justify-center">
-              <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs>
-                  <pattern id="grid" width="8" height="8" patternUnits="userSpaceOnUse">
-                    <path d="M 8 0 L 0 0 0 8" fill="none" stroke="currentColor" strokeOpacity="0.06" />
-                  </pattern>
-                </defs>
-                <rect width="100" height="100" fill="url(#grid)" />
-
-                {ranked.map((item) => {
-                  const coords = NEIGHBOURHOOD_COORDS[item.name] || { x: 50, y: 50 };
-                  const isSelected = selectedPin?.name === item.name;
-                  const pinColor = item.score > 3.8 ? '#f43f5e' : item.score > 2.5 ? '#f59e0b' : '#10b981';
-
-                  return (
-                    <g
-                      key={item.name}
-                      className="cursor-pointer transition-transform duration-200"
-                      onClick={() => setSelectedPin(item)}
-                    >
-                      <circle
-                        cx={coords.x}
-                        cy={coords.y}
-                        r={isSelected ? 4 : 2.5}
-                        fill={pinColor}
-                        stroke="#ffffff"
-                        strokeWidth={isSelected ? 1 : 0.4}
-                        className="transition-all duration-200"
-                      />
-                      <text
-                        x={coords.x}
-                        y={coords.y - 3.5}
-                        fontSize="2.9"
-                        textAnchor="middle"
-                        className="font-medium select-none pointer-events-none fill-foreground"
-                      >
-                        {item.name}
-                      </text>
-                    </g>
-                  );
-                })}
-              </svg>
-
-              {selectedPin && (
-                <div className="absolute bottom-3 left-3 right-3 sm:right-auto sm:w-80 bg-background/95 backdrop-blur-md p-4 rounded-xl border border-border shadow-xl text-xs">
-                  <div className="flex items-center justify-between font-semibold text-foreground mb-1">
-                    <span className="text-sm">{selectedPin.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedPin(null)}
-                      className="text-muted-foreground hover:text-foreground text-base leading-none px-1"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/50 text-center my-2">
-                    <div>
-                      <span className="text-[10px] text-muted-foreground block">Heat Proxy</span>
-                      <span className="font-bold text-rose-500 text-sm">{selectedPin.heat.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-muted-foreground block">Elderly</span>
-                      <span className="font-bold text-amber-500 text-sm">{selectedPin.age.toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-muted-foreground block">Income Vuln.</span>
-                      <span className="font-bold text-emerald-500 text-sm">{selectedPin.income.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground italic">{selectedPin.profile}</p>
-                </div>
-              )}
+            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-border shadow-inner">
+              <iframe
+                title="Geographic Risk Map"
+                srcDoc={mapHtml}
+                className="w-full h-full border-0"
+              />
             </div>
           </div>
 
