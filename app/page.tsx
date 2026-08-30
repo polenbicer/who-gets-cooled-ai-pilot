@@ -5,6 +5,7 @@ import {
   ArrowRight,
   BrainCircuit,
   Building2,
+  CheckCircle2,
   FileSpreadsheet,
   Flame,
   Info,
@@ -34,13 +35,6 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -443,34 +437,132 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Interactive Policy Weight Simulator */}
-          <div className="p-5 mb-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div>
-                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
-                  <Sliders className="size-4 text-[#c2410c]" /> Policy Weight Allocation Simulator
-                </h3>
-                <p className="text-xs text-stone-500 mt-0.5">
-                  Adjust custom parameter weights to audit how algorithmic scoring shifts municipal priority rankings.
-                </p>
+          {/* HIGH-IMPACT INTERACTIVE POLICY CONTROL DECK */}
+          <section className="mb-8 rounded-2xl border-2 border-slate-900/10 bg-white p-5 md:p-6 shadow-md ring-1 ring-slate-900/5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-stone-100 pb-4 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-lg bg-amber-500/10 text-[#c2410c]">
+                  <Sliders className="size-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 tracking-tight">Interactive Policy Sandbox</h2>
+                  <p className="text-xs text-stone-500">Simulate how normative political choices alter automated municipal priorities.</p>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomWeights(!isCustomWeights)}
-                className={`text-xs px-3.5 py-1.5 rounded-md font-semibold transition-all shadow-xs ${
-                  isCustomWeights ? 'bg-slate-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                {isCustomWeights ? '✓ Custom Mode Active' : 'Enable Custom Weights'}
-              </button>
+
+              <span className="inline-flex items-center gap-1.5 self-start md:self-auto rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold text-slate-700 border border-stone-200">
+                <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Live Simulation Active
+              </span>
             </div>
 
+            {/* Top Row: Cities & Policy Rules via High-Affordance Buttons */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+              {/* City Switcher */}
+              <div className="lg:col-span-4">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block mb-2">
+                  1. Select Urban Context
+                </label>
+                <div className="grid grid-cols-2 gap-2 bg-stone-100 p-1.5 rounded-xl border border-stone-200">
+                  <button
+                    type="button"
+                    onClick={() => setCity('Brussels')}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold transition-all ${
+                      city === 'Brussels'
+                        ? 'bg-white text-slate-950 shadow-sm border border-stone-200/60'
+                        : 'text-stone-600 hover:text-slate-950'
+                    }`}
+                  >
+                    <Building2 className="size-3.5 text-slate-700" />
+                    Brussels
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCity('Amsterdam')}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-bold transition-all ${
+                      city === 'Amsterdam'
+                        ? 'bg-white text-slate-950 shadow-sm border border-stone-200/60'
+                        : 'text-stone-600 hover:text-slate-950'
+                    }`}
+                  >
+                    <Building2 className="size-3.5 text-slate-700" />
+                    Amsterdam
+                  </button>
+                </div>
+              </div>
+
+              {/* Policy Rule Preset Selector */}
+              <div className="lg:col-span-8">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block">
+                    2. Choose Policy Framework
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomWeights(!isCustomWeights)}
+                    className={`text-[11px] font-bold transition-colors underline underline-offset-4 ${
+                      isCustomWeights ? 'text-[#c2410c]' : 'text-stone-500 hover:text-slate-900'
+                    }`}
+                  >
+                    {isCustomWeights ? '✕ Switch to Presets' : '⚙️ Custom Sliders'}
+                  </button>
+                </div>
+
+                {!isCustomWeights ? (
+                  <div className="grid grid-cols-3 gap-2 bg-stone-100 p-1.5 rounded-xl border border-stone-200">
+                    {(['heat', 'balanced', 'justice'] as Scenario[]).map((scKey) => {
+                      const active = scenario === scKey;
+                      const label = scKey === 'heat' ? 'Heat-First (70/30)' : scKey === 'balanced' ? 'Balanced (50/50)' : 'Justice-First (30/70)';
+                      return (
+                        <button
+                          key={scKey}
+                          type="button"
+                          onClick={() => setScenario(scKey)}
+                          className={`py-2 px-2 text-center rounded-lg text-xs font-bold transition-all truncate ${
+                            active
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'text-stone-600 hover:bg-white/60 hover:text-slate-950'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/20 text-xs font-semibold text-stone-700 flex items-center justify-between">
+                    <span>Custom Weight Sliders are active below.</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomWeights(false)}
+                      className="px-2.5 py-1 bg-slate-900 text-white rounded-md text-[10px] font-bold"
+                    >
+                      Reset to Presets
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Policy Rule Dynamic Note Banner */}
+            {!isCustomWeights ? (
+              <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200/80 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-rose-700 flex items-center gap-1"><Flame className="size-3.5" /> {Math.round(rule.heatWeight * 100)}% Heat Weight</span>
+                  <span className="text-stone-300">|</span>
+                  <span className="font-bold text-slate-800 flex items-center gap-1"><Users className="size-3.5" /> {Math.round(rule.socialWeight * 100)}% Social Vulnerability</span>
+                </div>
+                <p className="text-stone-500 text-[11px] italic">{rule.note}</p>
+              </div>
+            ) : null}
+
+            {/* Custom Sliders (Shown when toggled) */}
             {isCustomWeights && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-stone-100">
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="flex items-center gap-1.5 text-stone-700"><Flame className="size-3.5 text-rose-600" /> Heat Proxy Weight</span>
-                    <span className="text-rose-700 font-bold">{heatWeight}%</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 mt-5 border-t border-stone-200">
+                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                  <div className="flex justify-between text-xs mb-2 font-bold">
+                    <span className="flex items-center gap-1.5 text-stone-800"><Flame className="size-4 text-rose-600" /> Heat Proxy</span>
+                    <span className="text-rose-700">{heatWeight}%</span>
                   </div>
                   <input
                     type="range"
@@ -478,14 +570,14 @@ export default function Home() {
                     max="100"
                     value={heatWeight}
                     onChange={(e) => setHeatWeight(Number(e.target.value))}
-                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
+                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
                   />
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="flex items-center gap-1.5 text-stone-700"><Users className="size-3.5 text-amber-600" /> Elderly (65+) Weight</span>
-                    <span className="text-amber-700 font-bold">{ageWeight}%</span>
+                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                  <div className="flex justify-between text-xs mb-2 font-bold">
+                    <span className="flex items-center gap-1.5 text-stone-800"><Users className="size-4 text-amber-600" /> Elderly (65+)</span>
+                    <span className="text-amber-700">{ageWeight}%</span>
                   </div>
                   <input
                     type="range"
@@ -493,14 +585,14 @@ export default function Home() {
                     max="100"
                     value={ageWeight}
                     onChange={(e) => setAgeWeight(Number(e.target.value))}
-                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
+                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
                   />
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5 font-medium">
-                    <span className="flex items-center gap-1.5 text-stone-700"><ShieldCheck className="size-3.5 text-sky-600" /> Low Income Weight</span>
-                    <span className="text-sky-700 font-bold">{incomeWeight}%</span>
+                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
+                  <div className="flex justify-between text-xs mb-2 font-bold">
+                    <span className="flex items-center gap-1.5 text-stone-800"><ShieldCheck className="size-4 text-sky-600" /> Low Income</span>
+                    <span className="text-sky-700">{incomeWeight}%</span>
                   </div>
                   <input
                     type="range"
@@ -508,67 +600,15 @@ export default function Home() {
                     max="100"
                     value={incomeWeight}
                     onChange={(e) => setIncomeWeight(Number(e.target.value))}
-                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-slate-900"
+                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
                   />
                 </div>
               </div>
             )}
-          </div>
-
-          {/* City and Policy Presets */}
-          <section className="mb-6 grid gap-4 rounded-xl border border-stone-200 bg-white p-4 shadow-xs md:grid-cols-[1fr_1fr_2fr] md:p-5">
-            <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500">
-              Target City
-              <Select value={city} onValueChange={(value) => setCity(value as City)}>
-                <SelectTrigger className="h-10 w-full bg-stone-50 border-stone-200 text-xs font-semibold text-slate-900">
-                  <Building2 className="size-3.5 text-slate-700 mr-1" aria-hidden="true" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Brussels">Brussels</SelectItem>
-                  <SelectItem value="Amsterdam">Amsterdam</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-
-            <label className="grid gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500">
-              Policy Rule Preset
-              <Select disabled={isCustomWeights} value={scenario} onValueChange={(value) => setScenario(value as Scenario)}>
-                <SelectTrigger className="h-10 w-full bg-stone-50 border-stone-200 text-xs font-semibold text-slate-900">
-                  <ShieldCheck className="size-3.5 text-slate-700 mr-1" aria-hidden="true" />
-                  <SelectValue>{isCustomWeights ? 'Custom Weights Mode' : rule.label}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="heat">Heat-first</SelectItem>
-                  <SelectItem value="balanced">Balanced</SelectItem>
-                  <SelectItem value="justice">Justice-first</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-
-            <div className="rounded-lg bg-stone-50 border border-stone-200/80 px-4 py-2.5 flex flex-col justify-center">
-              {isCustomWeights ? (
-                <div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="text-xs font-bold text-slate-900">Dynamic User Weights:</span>
-                    <span className="text-xs text-stone-600">{heatWeight}% Heat · {ageWeight}% Age · {incomeWeight}% Income</span>
-                  </div>
-                  <p className="mt-0.5 text-[11px] text-stone-500">Rankings below reflect real-time user-defined criteria.</p>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                    <span className="font-semibold text-rose-700">{Math.round(rule.heatWeight * 100)}% Heat Weight</span>
-                    <span className="font-semibold text-slate-700">{Math.round(rule.socialWeight * 100)}% Social Vulnerability</span>
-                  </div>
-                  <p className="mt-1 text-[11px] text-stone-500 leading-tight">{rule.note}</p>
-                </div>
-              )}
-            </div>
           </section>
 
           {/* 1. SECTION: Priority Ranking & Top Priority Target */}
-          <section className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
+          <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
             <Card className="border border-stone-200 bg-white shadow-xs">
               <CardHeader className="border-b border-stone-100 pb-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -576,7 +616,7 @@ export default function Home() {
                     <CardTitle className="text-base font-bold text-slate-900">Neighbourhood Priority Ranking</CardTitle>
                     <CardDescription className="text-xs text-stone-500">City-relative score index (5 = highest intervention urgency).</CardDescription>
                   </div>
-                  <Badge variant="outline" className="border-stone-300 bg-stone-50 text-slate-800 text-xs">
+                  <Badge variant="outline" className="border-stone-300 bg-stone-50 text-slate-800 text-xs font-semibold">
                     {isCustomWeights ? 'Custom Weights' : rule.label}
                   </Badge>
                 </div>
@@ -621,34 +661,63 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            <div className="grid content-start gap-5">
-              {/* Top Priority Target Card */}
-              <div className="rounded-xl bg-slate-950 p-6 text-white shadow-sm border border-slate-900">
+            {/* Top Priority Target Card */}
+            <div className="rounded-2xl bg-slate-950 p-6 text-white shadow-md border border-slate-900 flex flex-col justify-between">
+              <div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-amber-400">Top Priority Target</p>
-                <h3 className="mt-1 font-serif text-2xl font-bold">{top.name}</h3>
-                <p className="text-xs text-slate-400">{city} · score {top.score ? top.score.toFixed(2) : 'N/A'}</p>
+                <h3 className="mt-1 font-serif text-3xl font-bold">{top.name}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{city} · priority score {top.score ? top.score.toFixed(2) : 'N/A'}</p>
 
-                <div className="mt-5 grid grid-cols-3 gap-2.5">
+                <div className="mt-6 grid grid-cols-3 gap-2.5">
                   {[
                     ['Heat Proxy', top.heat, 'text-rose-400'],
                     ['Elderly (65+)', top.age, 'text-amber-400'],
                     ['Low Income', top.income, 'text-sky-400'],
                   ].map(([label, value, colorClass]) => (
-                    <div key={String(label)} className="rounded-lg bg-slate-900/80 p-2.5 border border-slate-800 text-center">
+                    <div key={String(label)} className="rounded-xl bg-slate-900 p-3 border border-slate-800 text-center">
                       <p className="text-[10px] text-slate-400">{label}</p>
-                      <p className={`mt-0.5 font-mono text-base font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
+                      <p className={`mt-0.5 font-mono text-lg font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
-
-                <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-slate-900/80 p-3 text-xs leading-relaxed border border-slate-800 text-slate-300">
-                  <BrainCircuit className="mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true" />
-                  <span>{top.profile}</span>
-                </div>
               </div>
 
-              {/* Where AI Enters */}
-              <Card className="border border-stone-200 bg-white shadow-xs">
+              <div className="mt-6 flex items-start gap-2.5 rounded-xl bg-slate-900 p-3.5 text-xs leading-relaxed border border-slate-800 text-slate-300">
+                <BrainCircuit className="mt-0.5 size-4 shrink-0 text-amber-400" aria-hidden="true" />
+                <span><strong>Profile:</strong> {top.profile}</span>
+              </div>
+            </div>
+          </section>
+
+          {/* 2. SECTION: OpenStreetMap Real Geographic View */}
+          <div className="p-5 mb-8 rounded-2xl border border-stone-200 bg-white shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div>
+                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
+                  <Layers className="size-4 text-[#c2410c]" /> Spatial Exposure & Risk Map ({city})
+                </h3>
+                <p className="text-xs text-stone-500">Real geographic map powered by OpenStreetMap. Click markers to inspect metrics.</p>
+              </div>
+              <div className="flex items-center gap-3 text-xs">
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-red-600 inline-block"></span> High Risk</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate</span>
+                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-slate-600 inline-block"></span> Lower Baseline</span>
+              </div>
+            </div>
+
+            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-stone-200 shadow-inner">
+              <iframe
+                title="Geographic Risk Map"
+                srcDoc={mapHtml}
+                className="w-full h-full border-0"
+              />
+            </div>
+          </div>
+
+          {/* 3. SECTION: Bottom Conceptual & Methodological Summary (Where AI Enters) */}
+          <section className="grid gap-6 md:grid-cols-12">
+            <div className="md:col-span-8">
+              <Card className="border border-stone-200 bg-white shadow-xs h-full">
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-900">
                     <Info className="size-4 text-[#c2410c]" /> Where AI Enters Decision-Making
@@ -675,41 +744,24 @@ export default function Home() {
                   ))}
                 </CardContent>
               </Card>
+            </div>
 
-              {/* Limitation Notice */}
-              <div className="rounded-xl border border-stone-200 bg-stone-100/70 p-4 text-slate-800 text-xs">
-                <p className="flex items-center gap-1.5 font-bold text-slate-900"><Info className="size-3.5 text-stone-600" /> Methodological Note</p>
-                <p className="mt-1 text-[11px] text-stone-600 leading-relaxed">
-                  This research proof-of-concept calculates spatial priority based on proxy indicators rather than in-situ sensor telemetry. It is intended to audit algorithmic bias and enhance deliberative governance.
+            <div className="md:col-span-4">
+              <div className="rounded-2xl border border-stone-200 bg-stone-100/70 p-5 text-slate-800 text-xs h-full flex flex-col justify-between">
+                <div>
+                  <p className="flex items-center gap-1.5 font-bold text-slate-900 text-sm mb-2">
+                    <Info className="size-4 text-stone-600" /> Methodological Note
+                  </p>
+                  <p className="text-[11px] text-stone-600 leading-relaxed">
+                    This research proof-of-concept calculates spatial priority based on proxy indicators rather than in-situ sensor telemetry. It is intended to audit algorithmic bias and enhance deliberative urban governance.
+                  </p>
+                </div>
+                <p className="mt-4 text-[10px] text-stone-400 font-mono">
+                  Comparative Urban Governance Pilot · 2026
                 </p>
               </div>
             </div>
           </section>
-
-          {/* 2. SECTION: OpenStreetMap Real Geographic View (Artık Tabloların ve Kartların Altında) */}
-          <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-              <div>
-                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
-                  <Layers className="size-4 text-[#c2410c]" /> Spatial Exposure & Risk Map ({city})
-                </h3>
-                <p className="text-xs text-stone-500">Real geographic map powered by OpenStreetMap. Click markers to inspect metrics.</p>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-red-600 inline-block"></span> High Risk</span>
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate</span>
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-slate-600 inline-block"></span> Lower Baseline</span>
-              </div>
-            </div>
-
-            <div className="w-full h-[420px] rounded-lg overflow-hidden border border-stone-200 shadow-inner">
-              <iframe
-                title="Geographic Risk Map"
-                srcDoc={mapHtml}
-                className="w-full h-full border-0"
-              />
-            </div>
-          </div>
         </div>
       ) : (
         /* METHODOLOGY & ANALYTICAL FRAMEWORK TAB */
