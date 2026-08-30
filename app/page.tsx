@@ -148,7 +148,7 @@ export default function Home() {
               Explore who moves up the cooling priority list—and why.
             </h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">
-              This research prototype explores how AI-assisted urban heat governance can make competing policy values visible. Using open municipal indicators for 10 neighbourhoods in Brussels and Amsterdam, it converts heat exposure, age vulnerability and income vulnerability into relative 1–5 scores, applies K-means clustering to identify similar risk profiles, and compares heat-first, balanced and justice-first allocation rules. Its purpose is not to automate public decisions, but to reveal how data choices and policy weights can change which neighbourhoods are prioritised for cooling—and to keep the final decision open to public scrutiny and human judgment.
+              Who Gets Cooled? is an open research prototype and decision-audit tool investigating the intersection of algorithmic governance, urban climate adaptation, and environmental justice. By auditing how local governments in Brussels and Amsterdam deploy data-driven cooling strategies, this project examines whether AI-assisted climate interventions protect the most vulnerable populations or reinforce spatial inequalities.
             </p>
             <p className="mt-4 inline-flex items-center rounded-full border border-primary/15 bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
               Developed by&nbsp;<strong className="font-semibold text-foreground">Polen Bicer</strong>
