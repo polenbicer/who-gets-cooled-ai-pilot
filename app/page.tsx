@@ -399,9 +399,9 @@ export default function Home() {
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2410c]">
                 <BrainCircuit className="size-4" aria-hidden="true" /> Algorithmic Governance Audit
               </p>
-              <h1 className="font-serif text-3xl font-bold tracking-tight text-slate-950 md:text-5xl leading-tight">
-                Explore who moves up the cooling priority list—and why.
-              </h1>
+              <h1 className="font-serif text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-slate-950 leading-snug">
+  Who Gets Cooled? Auditing Algorithmic Climate Adaptation.
+</h1>
               <p className="mt-4 text-sm leading-relaxed text-stone-600 md:text-base">
                 An open research prototype investigating the intersection of algorithmic governance, urban climate adaptation, and environmental justice. By auditing how local governments in Brussels and Amsterdam deploy data-driven cooling interventions, this tool examines whether AI-assisted allocation protects the most vulnerable populations or reinforces spatial inequalities.
               </p>
