@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   BrainCircuit,
@@ -56,7 +57,35 @@ type Neighbourhood = {
   income: number;
   profile: string;
 };
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREdQHMp0P_JjheI_LaV__Ds8AhETMiRwH3BX9GUIbwHTG_Y0JmAim-at3d4whwILQxOYJLws28-fjH/pub?output=csv";
 
+function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
+  const lines = csvText.trim().split('\n');
+  if (lines.length <= 1) return [];
+
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  const cityIdx = headers.indexOf('city');
+  const nameIdx = headers.indexOf('area_name');
+  const heatIdx = headers.indexOf('relative_heat_proxy_score_1_5');
+  const ageIdx = headers.indexOf('age_vulnerability_score_1_5');
+  const incomeIdx = headers.indexOf('income_vulnerability_score_1_5');
+  const notesIdx = headers.indexOf('notes');
+
+  return lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const cityRaw = values[cityIdx] || 'Brussels';
+    const city: City = cityRaw.toLowerCase().includes('amsterdam') ? 'Amsterdam' : 'Brussels';
+
+    return {
+      city,
+      name: values[nameIdx] || 'Unknown',
+      heat: parseFloat(values[heatIdx]) || 1,
+      age: parseFloat(values[ageIdx]) || 1,
+      income: parseFloat(values[incomeIdx]) || 1,
+      profile: values[notesIdx] || 'Socio-spatial heat exposure profile',
+    };
+  });
+}
 const neighbourhoods: Neighbourhood[] = [
   { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, profile: 'High heat + income vulnerability' },
   { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.54, income: 5, profile: 'High heat + income vulnerability' },
@@ -93,6 +122,19 @@ function profileTone(profile: string) {
 }
 
 export default function Home() {
+  const [data, setData] = useState<Neighbourhood[]>(neighbourhoods);
+
+  useEffect(() => {
+    fetch(CSV_URL)
+      .then(res => res.text())
+      .then(csvText => {
+        const parsed = parseNeighbourhoodCSV(csvText);
+        if (parsed.length > 0) {
+          setData(parsed);
+        }
+      })
+      .catch(err => console.error('Error fetching live Google Sheet:', err));
+  }, []);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'methodology'>('dashboard');
   const [city, setCity] = useState<City>('Brussels');
   const [scenario, setScenario] = useState<Scenario>('heat');
@@ -109,8 +151,8 @@ export default function Home() {
   const matches = useMemo(() => {
     const cleanQuery = query.trim().toLocaleLowerCase();
     if (!cleanQuery) return [];
-    return neighbourhoods.filter((area) => area.name.toLocaleLowerCase().includes(cleanQuery));
-  }, [query]);
+    return data.filter((area) => area.name.toLocaleLowerCase().includes(cleanQuery));
+  }, [query, data]);
 
   const top = ranked[0];
   const rule = scenarios[scenario];
