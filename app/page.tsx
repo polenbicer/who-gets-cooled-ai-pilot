@@ -456,7 +456,7 @@ export default function Home() {
             </div>
             <div>
               <p className="font-serif text-base font-bold tracking-tight text-slate-900 leading-tight">Who Gets Cooled?</p>
-              <p className="text-[11px] text-stone-500 font-medium">Urban Heat AI Decision Sandbox</p>
+<p className="text-[11px] text-stone-500 font-medium">Critical Data & Urban AI Audit Sandbox</p>
             </div>
           </div>
 
@@ -483,8 +483,8 @@ export default function Home() {
                 Who Gets Cooled? Auditing Algorithmic Climate Adaptation.
               </h1>
               <p className="mt-3 text-sm leading-relaxed text-stone-600 md:text-base">
-                AI does not decide which neighbourhood gets cooled. <strong>Human policymakers choose what data to value</strong>—the algorithm merely computes the spatial consequences. This interactive sandbox audits how shifting political priorities in Brussels and Amsterdam re-allocate climate resilience resources.
-              </p>
+  AI does not decide which neighbourhood gets cooled. <strong>Human policymakers choose what data to value</strong>, while the algorithm merely computes the spatial consequences. This interactive sandbox audits how shifting political priorities in Brussels and Amsterdam re-allocate climate resilience resources.
+</p>
             </div>
 
             <div className="relative">
