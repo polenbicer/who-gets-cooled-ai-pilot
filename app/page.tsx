@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BrainCircuit,
   Building2,
-  CheckCircle2,
   Compass,
   FileSpreadsheet,
   Flame,
@@ -18,7 +17,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   Sliders,
-  Sparkles,
   Trees,
   TrendingDown,
   TrendingUp,
@@ -79,7 +77,7 @@ type Neighbourhood = {
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREdQHMp0P_JjheI_LaV__Ds8AhETMiRwH3BX9GUIbwHTG_Y0JmAim-at3d4whwILQxOYJLws28-fjH/pub?output=csv";
 
-// Coğrafi Enlem / Boylam Koordinatları (4 Şehir)
+// Coğrafi Koordinatlar (4 Şehir)
 const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   // Brussels
   'Marolles': { lat: 50.8385, lng: 4.3468 },
@@ -162,15 +160,21 @@ function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
 
   return lines.slice(1).map(line => {
     const values = parseRow(line);
-    const cityRaw = (values[cityIdx] || 'Brussels').trim().toLowerCase();
-    
+    const rawCityStr = (values[cityIdx] || '').trim();
+
+    // Türkçe karakter (İ / ı / I / i) bağımsız akıllı şehir eşleştirme
     let city: City = 'Brussels';
-    if (cityRaw.includes('amsterdam')) city = 'Amsterdam';
-    else if (cityRaw.includes('istanbul') || cityRaw.includes('i̇stanbul')) city = 'Istanbul';
-    else if (cityRaw.includes('izmir') || cityRaw.includes('i̇zmir')) city = 'Izmir';
+    if (/amsterdam/i.test(rawCityStr)) {
+      city = 'Amsterdam';
+    } else if (/istanbul|i̇stanbul|ıstanbul/i.test(rawCityStr)) {
+      city = 'Istanbul';
+    } else if (/izmir|i̇zmir|ızmir/i.test(rawCityStr)) {
+      city = 'Izmir';
+    } else if (/brussel/i.test(rawCityStr)) {
+      city = 'Brussels';
+    }
 
     const name = values[nameIdx] || 'Unknown';
-
     const heat = parseFloat(values[heatIdx]?.replace(',', '.')) || 1;
     const age = parseFloat(values[ageIdx]?.replace(',', '.')) || 1;
     const income = parseFloat(values[incomeIdx]?.replace(',', '.')) || 1;
@@ -259,7 +263,7 @@ export default function Home() {
   const [incomeWeight, setIncomeWeight] = useState<number>(33);
   const [isCustomWeights, setIsCustomWeights] = useState<boolean>(false);
 
-  // What-If Cooling Interventions State
+  // What-If Interventions
   const [applyTrees, setApplyTrees] = useState<boolean>(false);
   const [applyShelter, setApplyShelter] = useState<boolean>(false);
   const [applyRetrofit, setApplyRetrofit] = useState<boolean>(false);
@@ -276,7 +280,6 @@ export default function Home() {
       .catch(err => console.error('Error fetching live Google Sheet:', err));
   }, []);
 
-  // Baseline Ranking (Heat-First, 70/30) for Rank Shift Delta Calculation
   const baselineRanks = useMemo(() => {
     const list = data
       .filter((area) => area.city === city)
@@ -294,7 +297,6 @@ export default function Home() {
     return map;
   }, [data, city]);
 
-  // Current Dynamic Ranking with Custom Weights + What-If Interventions
   const ranked = useMemo(() => {
     return data
       .filter((area) => area.city === city)
@@ -348,7 +350,6 @@ export default function Home() {
   const top = ranked[0] || data[0];
   const rule = scenarios[scenario];
 
-  // Radar Data calculation for Top Priority Target vs. City Average
   const radarData = useMemo(() => {
     const cityItems = ranked;
     if (!top || cityItems.length === 0) return [];
@@ -364,7 +365,6 @@ export default function Home() {
     ];
   }, [top, ranked]);
 
-  // OpenStreetMap Harita Entegrasyonu (4 Şehir Dinamik Merkezli)
   const mapHtml = useMemo(() => {
     const center = CITY_CENTERS[city] || CITY_CENTERS.Brussels;
     const pinsJson = JSON.stringify(
@@ -1085,7 +1085,7 @@ export default function Home() {
                   <strong>Operational Definition:</strong> Standardised inverse of median household disposable income and low-income subsidy dependency rate.
                 </p>
                 <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
-                  <strong>Why it matters:</strong> Low-income households face severe &apos;thermal energy poverty&apos;, lack private air-conditioning, and reside in poorly insulated housing stuf.
+                  <strong>Why it matters:</strong> Low-income households face severe &apos;thermal energy poverty&apos;, lack private air-conditioning, and reside in poorly insulated housing stock.
                 </p>
               </div>
             </div>
