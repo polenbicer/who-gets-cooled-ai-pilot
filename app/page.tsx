@@ -125,80 +125,6 @@ const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
   Izmir: { lat: 38.4200, lng: 27.1400, zoom: 11 },
 };
 
-function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
-  const parseRow = (text: string) => {
-    const result: string[] = [];
-    let field = '';
-    let inQuotes = false;
-    for (let i = 0; i < text.length; i++) {
-      const char = text[i];
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        result.push(field.trim().replace(/^"|"$/g, ''));
-        field = '';
-      } else {
-        field += char;
-      }
-    }
-    result.push(field.trim().replace(/^"|"$/g, ''));
-    return result;
-  };
-
-  const lines = csvText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
-  if (lines.length <= 1) return [];
-
-  const headers = parseRow(lines[0]).map(h => h.toLowerCase());
-  const cityIdx = headers.indexOf('city');
-  const nameIdx = headers.indexOf('area_name');
-  const heatIdx = headers.indexOf('relative_heat_proxy_score_1_5');
-  const ageIdx = headers.indexOf('age_vulnerability_score_1_5');
-  const incomeIdx = headers.indexOf('income_vulnerability_score_1_5');
-  const notesIdx = headers.indexOf('notes') !== -1 ? headers.indexOf('notes') : headers.indexOf('ai_vulnerability_profile');
-  const latIdx = headers.indexOf('lat');
-  const lngIdx = headers.indexOf('lng');
-
-  return lines.slice(1).map(line => {
-    const values = parseRow(line);
-    const rawCityStr = (values[cityIdx] || '').trim();
-
-    let city: City = 'Brussels';
-    if (/amsterdam/i.test(rawCityStr)) {
-      city = 'Amsterdam';
-    } else if (/istanbul|i̇stanbul|ıstanbul/i.test(rawCityStr)) {
-      city = 'Istanbul';
-    } else if (/izmir|i̇zmir|ızmir/i.test(rawCityStr)) {
-      city = 'Izmir';
-    } else if (/brussel/i.test(rawCityStr)) {
-      city = 'Brussels';
-    }
-
-    const name = values[nameIdx] || 'Unknown';
-    const heat = parseFloat(values[heatIdx]?.replace(',', '.')) || 1;
-    const age = parseFloat(values[ageIdx]?.replace(',', '.')) || 1;
-    const income = parseFloat(values[incomeIdx]?.replace(',', '.')) || 1;
-
-    let profile = values[notesIdx] || '';
-    if (!profile || profile.includes('temperature.') || !isNaN(Number(profile))) {
-      if (heat >= 4 && income >= 4) profile = 'High heat + income vulnerability';
-      else if (age >= 4) profile = 'Age vulnerability + lower heat';
-      else if (income >= 4) profile = 'Income vulnerability + lower heat';
-      else profile = 'Moderate socio-spatial risk';
-    }
-
-    return {
-      city,
-      name,
-      heat,
-      age,
-      income,
-      profile,
-      lat: latIdx !== -1 && values[latIdx] ? parseFloat(values[latIdx].replace(',', '.')) : undefined,
-      lng: lngIdx !== -1 && values[lngIdx] ? parseFloat(values[lngIdx].replace(',', '.')) : undefined,
-    };
-  });
-}
-
 const defaultNeighbourhoods: Neighbourhood[] = [
   // Brussels
   { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, profile: 'High heat + income vulnerability' },
@@ -206,13 +132,23 @@ const defaultNeighbourhoods: Neighbourhood[] = [
   { city: 'Brussels', name: 'Cureghem Bara', heat: 5, age: 1, income: 4.95, profile: 'High heat + income vulnerability' },
   { city: 'Brussels', name: 'Châtelain', heat: 4.23, age: 1.35, income: 2.56, profile: 'High heat + income vulnerability' },
   { city: 'Brussels', name: "Vivier d'Oie", heat: 1, age: 5, income: 1, profile: 'Age vulnerability + lower heat' },
+  { city: 'Brussels', name: 'Schaerbeek (Helmet)', heat: 4.10, age: 2.10, income: 4.30, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Matonge', heat: 4.45, age: 1.80, income: 3.90, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Laeken (Centre)', heat: 3.80, age: 2.40, income: 3.80, profile: 'Moderate socio-spatial risk' },
+  { city: 'Brussels', name: 'Saint-Gilles', heat: 4.30, age: 1.70, income: 3.60, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Flagey - Malibran', heat: 3.90, age: 2.05, income: 2.80, profile: 'Moderate socio-spatial risk' },
   
   // Amsterdam
-  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.17, age: 1, income: 5, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.46, age: 1.3, income: 4.62, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5, age: 1.89, income: 4.9, profile: 'High heat + income vulnerability' },
-  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.08, age: 4.23, income: 1, profile: 'Age vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1, age: 5, income: 3.97, profile: 'Age vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5.00, age: 1.89, income: 4.90, profile: 'High heat + income vulnerability' },
+  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.17, age: 1.00, income: 5.00, profile: 'Income vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.46, age: 1.30, income: 4.62, profile: 'Income vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.08, age: 4.23, income: 1.00, profile: 'Age vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1.00, age: 5.00, income: 3.97, profile: 'Age vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Nieuw-West', heat: 2.40, age: 2.80, income: 4.50, profile: 'Income vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Zuidoost', heat: 2.10, age: 2.20, income: 4.80, profile: 'Income vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Noord', heat: 2.60, age: 3.10, income: 3.70, profile: 'Moderate socio-spatial risk' },
+  { city: 'Amsterdam', name: 'Oost', heat: 3.50, age: 2.40, income: 3.20, profile: 'Moderate socio-spatial risk' },
+  { city: 'Amsterdam', name: 'Centrum', heat: 4.80, age: 2.10, income: 2.50, profile: 'High heat exposure' },
 
   // Istanbul
   { city: 'Istanbul', name: 'Fatih', heat: 4.85, age: 3.80, income: 4.70, profile: 'High density historic core + socioeconomic vulnerability' },
@@ -228,6 +164,101 @@ const defaultNeighbourhoods: Neighbourhood[] = [
   { city: 'Izmir', name: 'Bornova', heat: 4.20, age: 2.50, income: 3.60, profile: 'Inland plain thermal accumulation + mixed profile' },
   { city: 'Izmir', name: 'Balçova', heat: 1.00, age: 4.10, income: 1.60, profile: 'Thermal/green microclimate buffer + lower physical heat' },
 ];
+
+function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
+  const rawLines = csvText.trim().split(/\r?\n/).filter(line => line.trim().length > 0);
+  if (rawLines.length <= 1) return [];
+
+  const firstLine = rawLines[0];
+  const delimiter = firstLine.includes('\t') ? '\t' : firstLine.includes(';') && !firstLine.includes(',') ? ';' : ',';
+
+  const parseRow = (text: string) => {
+    const result: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === delimiter && !inQuotes) {
+        result.push(field.trim().replace(/^"|"$/g, ''));
+        field = '';
+      } else {
+        field += char;
+      }
+    }
+    result.push(field.trim().replace(/^"|"$/g, ''));
+    return result;
+  };
+
+  const headers = parseRow(rawLines[0]).map(h => h.toLowerCase().trim().replace(/['"]/g, ''));
+  
+  const cityIdx = headers.findIndex(h => h.includes('city') || h.includes('şehir') || h.includes('sehir'));
+  const nameIdx = headers.findIndex(h => h.includes('area_name') || h.includes('area') || h.includes('name') || h.includes('neighbourhood') || h.includes('mahalle') || h.includes('ilçe') || h.includes('ilce'));
+  const heatIdx = headers.findIndex(h => h.includes('relative_heat') || h.includes('heat_proxy') || h.includes('heat_score') || (h.includes('heat') && h.includes('1_5')));
+  const ageIdx = headers.findIndex(h => h.includes('age_vulnerability') || h.includes('age_score') || (h.includes('age') && h.includes('1_5')));
+  const incomeIdx = headers.findIndex(h => h.includes('income_vulnerability') || h.includes('income_score') || (h.includes('income') && h.includes('1_5')));
+  const notesIdx = headers.findIndex(h => h.includes('note') || h.includes('profile') || h.includes('desc'));
+  const latIdx = headers.findIndex(h => h === 'lat' || h.includes('latitude'));
+  const lngIdx = headers.findIndex(h => h === 'lng' || h.includes('longitude') || h === 'lon');
+
+  const parsedItems: Neighbourhood[] = [];
+
+  for (let i = 1; i < rawLines.length; i++) {
+    const values = parseRow(rawLines[i]);
+    if (values.length <= 1) continue;
+
+    const rawCityStr = (cityIdx !== -1 ? values[cityIdx] : '').trim();
+    const rawName = (nameIdx !== -1 ? values[nameIdx] : '').trim();
+
+    if (!rawName || rawName.toLowerCase() === 'unknown') continue;
+
+    // Kesin Şehir Eşleme
+    let city: City | null = null;
+    if (/amsterdam/i.test(rawCityStr)) {
+      city = 'Amsterdam';
+    } else if (/istanbul|i̇stanbul|ıstanbul/i.test(rawCityStr)) {
+      city = 'Istanbul';
+    } else if (/izmir|i̇zmir|ızmir/i.test(rawCityStr)) {
+      city = 'Izmir';
+    } else if (/brussel/i.test(rawCityStr)) {
+      city = 'Brussels';
+    } else {
+      // Şehir sütununda yazmıyorsa isme göre eşle
+      if (['Fatih', 'Bağcılar', 'Kadıköy', 'Sarıyer', 'Esenyurt'].includes(rawName)) city = 'Istanbul';
+      else if (['Konak', 'Buca', 'Karşıyaka', 'Bornova', 'Balçova'].includes(rawName)) city = 'Izmir';
+      else if (['Amsterdamse Poort e.o.', 'De Kolenkit', 'Burgwallen-Oude Zijde', 'Apollobuurt', 'Buitenveldert-West', 'Nieuw-West', 'Zuidoost', 'Noord', 'Oost', 'Centrum'].includes(rawName)) city = 'Amsterdam';
+      else if (['Marolles', 'Molenbeek Historique', 'Cureghem Bara', 'Châtelain', "Vivier d'Oie", 'Schaerbeek (Helmet)', 'Matonge', 'Laeken (Centre)', 'Saint-Gilles', 'Flagey - Malibran'].includes(rawName)) city = 'Brussels';
+    }
+
+    if (!city) continue;
+
+    const heat = heatIdx !== -1 ? (parseFloat(values[heatIdx]?.replace(',', '.')) || 1) : 1;
+    const age = ageIdx !== -1 ? (parseFloat(values[ageIdx]?.replace(',', '.')) || 1) : 1;
+    const income = incomeIdx !== -1 ? (parseFloat(values[incomeIdx]?.replace(',', '.')) || 1) : 1;
+
+    let profile = notesIdx !== -1 ? values[notesIdx] : '';
+    if (!profile || profile.includes('temperature.') || !isNaN(Number(profile))) {
+      if (heat >= 4 && income >= 4) profile = 'High heat + income vulnerability';
+      else if (age >= 4) profile = 'Age vulnerability + lower heat';
+      else if (income >= 4) profile = 'Income vulnerability + lower heat';
+      else profile = 'Moderate socio-spatial risk';
+    }
+
+    parsedItems.push({
+      city,
+      name: rawName,
+      heat,
+      age,
+      income,
+      profile,
+      lat: latIdx !== -1 && values[latIdx] ? parseFloat(values[latIdx].replace(',', '.')) : undefined,
+      lng: lngIdx !== -1 && values[lngIdx] ? parseFloat(values[lngIdx].replace(',', '.')) : undefined,
+    });
+  }
+
+  return parsedItems;
+}
 
 const scenarios: Record<Scenario, { label: string; heatWeight: number; socialWeight: number; note: string }> = {
   heat: { label: 'Heat-first', heatWeight: 0.7, socialWeight: 0.3, note: 'Prioritises physical heat exposure and surface temperature anomalies.' },
@@ -267,18 +298,26 @@ export default function Home() {
   const [applyShelter, setApplyShelter] = useState<boolean>(false);
   const [applyRetrofit, setApplyRetrofit] = useState<boolean>(false);
 
- useEffect(() => {
+  useEffect(() => {
     fetch(CSV_URL)
       .then(res => res.text())
       .then(csvText => {
         const parsed = parseNeighbourhoodCSV(csvText);
         if (parsed.length > 0) {
-          // Google Sheet'ten gelen verileri al, eksik şehir varsa default listeden tamamla
-          setData(prev => {
-            const parsedCities = new Set(parsed.map(item => item.city));
-            const missingDefaults = defaultNeighbourhoods.filter(item => !parsedCities.has(item.city));
-            return [...parsed, ...missingDefaults];
+          // Her şehir için kontrol et: Canlıda varsa onu, yoksa varsayılanı koy
+          const cities: City[] = ['Brussels', 'Amsterdam', 'Istanbul', 'Izmir'];
+          const finalData: Neighbourhood[] = [];
+
+          cities.forEach(c => {
+            const cityParsed = parsed.filter(item => item.city === c);
+            if (cityParsed.length > 0) {
+              finalData.push(...cityParsed);
+            } else {
+              finalData.push(...defaultNeighbourhoods.filter(item => item.city === c));
+            }
           });
+
+          setData(finalData);
         }
       })
       .catch(err => {
@@ -305,8 +344,8 @@ export default function Home() {
   }, [data, city]);
 
   const ranked = useMemo(() => {
-    return data
-      .filter((area) => area.city === city)
+    const filtered = data.filter((area) => area.city === city);
+    return filtered
       .map((area) => {
         let effectiveHeat = area.heat;
         let effectiveAge = area.age;
@@ -354,7 +393,19 @@ export default function Home() {
     return data.filter((area) => area.name.toLocaleLowerCase().includes(cleanQuery));
   }, [query, data]);
 
-  const top = ranked[0] || data[0];
+  const top = ranked[0] || {
+    name: 'None',
+    city,
+    heat: 1,
+    age: 1,
+    income: 1,
+    profile: '',
+    score: 0,
+    rank: 1,
+    baselineRank: 1,
+    rankShift: 0,
+  };
+  
   const rule = scenarios[scenario];
 
   const radarData = useMemo(() => {
@@ -683,500 +734,5 @@ export default function Home() {
                 <span className="text-stone-300">|</span>
                 <span className="font-bold text-slate-800 flex items-center gap-1"><Users className="size-3.5" /> {isCustomWeights ? (ageWeight + incomeWeight) : Math.round(rule.socialWeight * 100)}% Social Weight</span>
               </div>
-              <div className="text-stone-600 text-[11px] font-medium flex items-center gap-1.5">
-                <Scale className="size-3.5 text-[#c2410c] shrink-0" />
-                <span>
-                  {scenario === 'justice' || (isCustomWeights && (ageWeight + incomeWeight) > 50)
-                    ? 'Social Justice Prioritised: Vulnerable demographics move up despite lower surface heat.'
-                    : 'Physical Heat Prioritised: Dense urban surfaces take precedence over social inequality.'}
-                </span>
-              </div>
-            </div>
-
-            {/* Custom Sliders */}
-            {isCustomWeights && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 mt-5 border-t border-stone-200">
-                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
-                  <div className="flex justify-between text-xs mb-2 font-bold">
-                    <span className="flex items-center gap-1.5 text-stone-800"><Flame className="size-4 text-rose-600" /> Heat Proxy</span>
-                    <span className="text-rose-700">{heatWeight}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={heatWeight}
-                    onChange={(e) => setHeatWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
-                  />
-                </div>
-
-                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
-                  <div className="flex justify-between text-xs mb-2 font-bold">
-                    <span className="flex items-center gap-1.5 text-stone-800"><Users className="size-4 text-amber-600" /> Elderly (65+)</span>
-                    <span className="text-amber-700">{ageWeight}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={ageWeight}
-                    onChange={(e) => setAgeWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
-                  />
-                </div>
-
-                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
-                  <div className="flex justify-between text-xs mb-2 font-bold">
-                    <span className="flex items-center gap-1.5 text-stone-800"><ShieldCheck className="size-4 text-sky-600" /> Low Income</span>
-                    <span className="text-sky-700">{incomeWeight}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={incomeWeight}
-                    onChange={(e) => setIncomeWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
-                  />
-                </div>
-              </div>
-            )}
-          </section>
-
-          {/* 1. SECTION: Priority Ranking & Top Priority Target */}
-          <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.65fr)]">
-            {/* Table & Bar Chart */}
-            <Card className="border border-stone-200 bg-white shadow-xs">
-              <CardHeader className="border-b border-stone-100 pb-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-base font-bold text-slate-900">{city} Priority Ranking</CardTitle>
-                    <CardDescription className="text-xs text-stone-500">
-                      Rank Shift (▲/▼) compares current policy to baseline Heat-First rules.
-                    </CardDescription>
-                  </div>
-                  <Badge variant="outline" className="border-stone-300 bg-stone-50 text-slate-800 text-xs font-semibold">
-                    {isCustomWeights ? 'Custom Weights' : rule.label}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-5">
-                <ChartContainer config={chartConfig} className="h-[280px] w-full aspect-auto md:h-[320px]">
-                  <BarChart data={ranked} layout="vertical" margin={{ left: 8, right: 22, top: 4, bottom: 4 }}>
-                    <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis type="number" domain={[0, 5]} tickCount={6} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                    <YAxis dataKey="name" type="category" width={145} axisLine={false} tickLine={false} tick={{ fill: '#0f172a', fontSize: 11, fontWeight: 500 }} />
-                    <ChartTooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTooltipContent hideLabel />} />
-                    <Bar dataKey="score" fill="#c2410c" radius={[0, 6, 6, 0]} barSize={26} />
-                  </BarChart>
-                </ChartContainer>
-
-                <div className="mt-5 overflow-hidden rounded-lg border border-stone-200">
-                  <Table>
-                    <TableHeader className="bg-stone-50">
-                      <TableRow className="border-stone-200">
-                        <TableHead className="w-14 text-xs font-bold text-stone-600">Rank</TableHead>
-                        <TableHead className="w-20 text-xs font-bold text-stone-600">Shift</TableHead>
-                        <TableHead className="text-xs font-bold text-stone-600">Area</TableHead>
-                        <TableHead className="hidden lg:table-cell text-xs font-bold text-stone-600">AI Vulnerability Profile</TableHead>
-                        <TableHead className="text-right text-xs font-bold text-stone-600">Score</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {ranked.map((area) => (
-                        <TableRow key={area.name} className="border-stone-100 hover:bg-stone-50/60">
-                          <TableCell className="font-mono text-xs text-stone-500 font-semibold">{area.rank}</TableCell>
-                          <TableCell>
-                            {area.rankShift > 0 ? (
-                              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                <TrendingUp className="size-3" /> +{area.rankShift}
-                              </span>
-                            ) : area.rankShift < 0 ? (
-                              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                                <TrendingDown className="size-3" /> {area.rankShift}
-                              </span>
-                            ) : (
-                              <span className="text-[11px] text-stone-400 font-mono pl-1">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="font-semibold text-slate-900 text-xs">{area.name}</TableCell>
-                          <TableCell className="hidden lg:table-cell">
-                            <span className={`inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium border ${profileTone(area.profile)}`}>
-                              {area.profile}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right font-mono font-bold text-slate-900 text-xs">{area.score.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Top Priority Target + Radar Chart + What-If Simulator */}
-            <div className="flex flex-col gap-5">
-              {/* Target Card with Radar Chart */}
-              <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-md border border-slate-900">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400">Top Priority Target</p>
-                    <h3 className="mt-0.5 font-serif text-2xl font-bold">{top.name}</h3>
-                    <p className="text-xs text-slate-400">{city} · Score: {top.score ? top.score.toFixed(2) : 'N/A'}</p>
-                  </div>
-                  <Badge className="bg-amber-400/10 text-amber-300 border-amber-400/20 text-[10px]">Rank #1</Badge>
-                </div>
-
-                {/* Radar Chart Component */}
-                <div className="mt-3 h-[180px] w-full flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                      <PolarGrid stroke="#334155" />
-                      <PolarAngleAxis dataKey="metric" tick={{ fill: '#cbd5e1', fontSize: 10 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 5]} tick={false} axisLine={false} />
-                      <Radar name={top.name} dataKey="target" stroke="#c2410c" fill="#c2410c" fillOpacity={0.6} />
-                      <Radar name="City Avg" dataKey="average" stroke="#64748b" fill="#64748b" fillOpacity={0.2} />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  {[
-                    ['Heat', top.heat, 'text-rose-400'],
-                    ['Elderly', top.age, 'text-amber-400'],
-                    ['Income', top.income, 'text-sky-400'],
-                  ].map(([label, value, colorClass]) => (
-                    <div key={String(label)} className="rounded-lg bg-slate-900 p-2 border border-slate-800 text-center">
-                      <p className="text-[10px] text-slate-400">{label}</p>
-                      <p className={`font-mono text-sm font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* What-If Cooling Interventions Simulator */}
-              <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                    <Wrench className="size-3.5 text-[#c2410c]" /> "What-If" Interventions
-                  </h4>
-                  <span className="text-[10px] text-stone-500">Test policy impact on {top.name}</span>
-                </div>
-
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => setApplyTrees(!applyTrees)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
-                      applyTrees
-                        ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-semibold'
-                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Trees className={`size-4 ${applyTrees ? 'text-emerald-600' : 'text-stone-400'}`} />
-                      <span>+15% Urban Tree Canopy</span>
-                    </span>
-                    <Badge variant="outline" className={`text-[10px] ${applyTrees ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'text-stone-500'}`}>
-                      -1.0 Heat
-                    </Badge>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setApplyShelter(!applyShelter)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
-                      applyShelter
-                        ? 'bg-amber-50 border-amber-300 text-amber-950 font-semibold'
-                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Users className={`size-4 ${applyShelter ? 'text-amber-600' : 'text-stone-400'}`} />
-                      <span>Cooling Shelter & Fountain Network</span>
-                    </span>
-                    <Badge variant="outline" className={`text-[10px] ${applyShelter ? 'bg-amber-100 border-amber-300 text-amber-800' : 'text-stone-500'}`}>
-                      -1.2 Age Risk
-                    </Badge>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setApplyRetrofit(!applyRetrofit)}
-                    className={`w-full flex items-center justify-between p-2.5 rounded-lg border text-left text-xs transition-all ${
-                      applyRetrofit
-                        ? 'bg-sky-50 border-sky-300 text-sky-950 font-semibold'
-                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <ShieldAlert className={`size-4 ${applyRetrofit ? 'text-sky-600' : 'text-stone-400'}`} />
-                      <span>Social Housing Thermal Retrofit</span>
-                    </span>
-                    <Badge variant="outline" className={`text-[10px] ${applyRetrofit ? 'bg-sky-100 border-sky-300 text-sky-800' : 'text-stone-500'}`}>
-                      -1.0 Poverty Risk
-                    </Badge>
-                  </button>
-                </div>
-
-                {(applyTrees || applyShelter || applyRetrofit) && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setApplyTrees(false);
-                      setApplyShelter(false);
-                      setApplyRetrofit(false);
-                    }}
-                    className="mt-3 w-full py-1.5 text-[11px] text-stone-500 hover:text-slate-900 flex items-center justify-center gap-1 border-t border-stone-100"
-                  >
-                    <RefreshCw className="size-3" /> Reset Interventions
-                  </button>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* 2. SECTION: OpenStreetMap Real Geographic View */}
-          <div className="p-5 mb-8 rounded-2xl border border-stone-200 bg-white shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-              <div>
-                <h3 className="font-semibold text-sm text-slate-900 flex items-center gap-2">
-                  <Layers className="size-4 text-[#c2410c]" /> Spatial Exposure & Risk Map ({city})
-                </h3>
-                <p className="text-xs text-stone-500">Real geographic map powered by OpenStreetMap. Click markers to inspect metrics.</p>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-red-600 inline-block"></span> High Risk</span>
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-amber-600 inline-block"></span> Moderate</span>
-                <span className="flex items-center gap-1.5 font-medium"><span className="size-2.5 rounded-full bg-slate-600 inline-block"></span> Lower Baseline</span>
-              </div>
-            </div>
-
-            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-stone-200 shadow-inner">
-              <iframe
-                title="Geographic Risk Map"
-                srcDoc={mapHtml}
-                className="w-full h-full border-0"
-              />
-            </div>
-          </div>
-
-          {/* 3. SECTION: Bottom Conceptual & Methodological Summary */}
-          <section className="grid gap-6 md:grid-cols-12">
-            <div className="md:col-span-8">
-              <Card className="border border-stone-200 bg-white shadow-xs h-full">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                    <Info className="size-4 text-[#c2410c]" /> Where AI Enters Decision-Making
-                  </CardTitle>
-                  <CardDescription className="text-xs text-stone-500">The model structures allocation evidence; democratic oversight decides.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-3 pt-1">
-                  {[
-                    ['Public Data Ingestion', 'Satellite thermal indices, tree canopy coverage, census registries'],
-                    ['Algorithmic Profiling', 'Pattern clustering identifies overlapping vulnerability types'],
-                    ['Human Policy Weights', 'Elected officials select normative weighting priorities'],
-                    ['Democratic Legitimacy', 'Citizen deliberation remains the final decisive arbiter'],
-                  ].map(([title, description], index) => (
-                    <div key={title} className="flex gap-3 items-center">
-                      <div className="grid size-6 shrink-0 place-items-center rounded-md bg-stone-100 font-mono text-xs font-bold text-slate-900">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-900">{title}</p>
-                        <p className="text-[11px] text-stone-500">{description}</p>
-                      </div>
-                      {index < 3 && <ArrowRight className="ml-auto size-3 text-stone-300 hidden sm:block" />}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="md:col-span-4">
-              <div className="rounded-2xl border border-stone-200 bg-stone-100/70 p-5 text-slate-800 text-xs h-full flex flex-col justify-between">
-                <div>
-                  <p className="flex items-center gap-1.5 font-bold text-slate-900 text-sm mb-2">
-                    <Info className="size-4 text-stone-600" /> Methodological & Scale Note
-                  </p>
-                  <p className="text-[11px] text-stone-600 leading-relaxed">
-                    Brussels and Amsterdam are operationalised at the <strong>neighbourhood level</strong> (quartier/wijk). Istanbul and Izmir are operationalised at the <strong>district level</strong> (ilçe) reflecting municipal open data structures.
-                  </p>
-                </div>
-                <p className="mt-4 text-[10px] text-stone-400 font-mono">
-                  Comparative Urban Governance Pilot · 2026
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : (
-        /* METHODOLOGY & ANALYTICAL FRAMEWORK TAB */
-        <div className="mx-auto max-w-[1240px] px-5 py-10 md:px-8">
-          <div className="mb-10 text-center md:text-left">
-            <Badge variant="outline" className="mb-3 border-stone-300 bg-stone-100 text-stone-700 text-xs font-medium">
-              Academic & Analytical Blueprint
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-slate-950">
-              Methodology & Theoretical Framework
-            </h2>
-            <p className="mt-3 text-sm md:text-base text-stone-600 max-w-3xl leading-relaxed">
-              This research prototype investigates the algorithmic governance of urban climate adaptation across four metropolises: Brussels, Amsterdam, Istanbul, and Izmir. By auditing socio-spatial trade-offs, it examines whether data modeling advances or undermines environmental justice.
-            </p>
-          </div>
-
-          {/* Core Risk Operationalisation Formula Box (Fixed JSX string escaping) */}
-          <div className="mb-10 rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#c2410c] mb-2 flex items-center gap-2">
-              <Compass className="size-4" /> IPCC Climate Risk Operationalisation
-            </h3>
-            <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 text-center my-3">
-              <p className="font-mono text-sm md:text-base font-bold text-slate-900">
-                Urban Heat Priority Score = (w_heat × Heat Proxy) + [w_social × ((Age 65+ + Income Vulnerability) / 2)]
-              </p>
-            </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Grounded in the IPCC Risk Framework (Risk = Hazard × Exposure × Vulnerability), the model converts raw administrative data into standardised 1–5 relative scores within each city. The weights (w) are not mathematical truths—they represent <strong>normative political choices</strong> made by human decision-makers.
-            </p>
-          </div>
-
-          {/* Section 1: Data Operationalisation */}
-          <div className="mb-12">
-            <h3 className="text-lg font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
-              <FileSpreadsheet className="size-5 text-[#c2410c]" /> 1. Data Operationalisation & Indicator Rationale
-            </h3>
-            <p className="text-xs md:text-sm text-stone-600 mb-6 leading-relaxed">
-              Algorithmic scoring models are never neutral; the choice of indicators defines what the municipal bureaucracy sees and what it ignores. Our dataset operationalises three foundational dimensions:
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
-                    <Flame className="size-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900">Thermal Risk Proxy (1-5)</h4>
-                </div>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Composite indicator based on Land Surface Temperature (LST) anomalies and high soil imperviousness (sealed concrete/asphalt ratio).
-                </p>
-                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
-                  <strong>Why it matters:</strong> Densely built urban fabrics with minimal tree canopy create severe Urban Heat Islands (UHI), preventing nocturnal cooling.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
-                    <Users className="size-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900">Age Vulnerability (65+)</h4>
-                </div>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Proportion of residents aged 65 and above, weighted by single-person household density from municipal census registries.
-                </p>
-                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
-                  <strong>Why it matters:</strong> Physiological thermoregulation decline combined with social isolation makes elderly residents the primary demographic for heat-wave mortality.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="p-2 rounded-lg bg-sky-50 text-sky-600">
-                    <ShieldAlert className="size-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900">Income Vulnerability</h4>
-                </div>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Standardised inverse of median household disposable income and low-income subsidy dependency rate.
-                </p>
-                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
-                  <strong>Why it matters:</strong> Low-income households face severe &apos;thermal energy poverty&apos;, lack private air-conditioning, and reside in poorly insulated housing stock.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Environmental Justice Dimensions */}
-          <div className="mb-12">
-            <h3 className="text-lg font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
-              <Scale className="size-5 text-[#c2410c]" /> 2. Environmental & Spatial Justice Triad
-            </h3>
-            <p className="text-xs md:text-sm text-stone-600 mb-6 leading-relaxed">
-              Following David Schlosberg and Gordon Walker, environmental justice in municipal climate adaptation requires examining three interrelated dimensions:
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-mono text-xs font-bold text-emerald-700 px-2 py-0.5 rounded bg-emerald-50">DISTRIBUTIVE</span>
-                  <h4 className="font-bold text-sm text-slate-900">Distributive Justice</h4>
-                </div>
-                <p className="text-xs font-semibold text-stone-700 mb-1">Spatial Resource Allocation</p>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  Who gets public shade, tree canopies, and cooling shelters? Audits whether cooling investments flow disproportionately to affluent areas (green gentrification) or protect marginalized spaces.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-mono text-xs font-bold text-amber-700 px-2 py-0.5 rounded bg-amber-50">PROCEDURAL</span>
-                  <h4 className="font-bold text-sm text-slate-900">Procedural Justice</h4>
-                </div>
-                <p className="text-xs font-semibold text-stone-700 mb-1">Democratic & Algorithmic Oversight</p>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  Who controls the model parameters? Ensures transparent algorithmic scoring (such as algorithm registers) where citizen deliberation and public officials audit automated allocation rules.
-                </p>
-              </div>
-
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-mono text-xs font-bold text-sky-700 px-2 py-0.5 rounded bg-sky-50">RECOGNITION</span>
-                  <h4 className="font-bold text-sm text-slate-900">Justice as Recognition</h4>
-                </div>
-                <p className="text-xs font-semibold text-stone-700 mb-1">Demographic & Lived Vulnerability</p>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  Are vulnerable populations recognized by the data? Pure satellite thermal indices often erase informal housing, elderly isolation, and indoor thermal misery unless social data is explicitly recognized.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 3: 4-City Comparative Urban Governance Context */}
-          <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-            <h3 className="text-base font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
-              <Globe className="size-4 text-[#c2410c]" /> 3. Comparative Urban Governance Context
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-xs text-stone-600">
-              <div className="border-l-2 border-slate-900 pl-3.5">
-                <h4 className="font-bold text-slate-900 mb-1">Brussels-Capital</h4>
-                <p className="leading-relaxed">
-                  High socio-spatial polarization along the canal (Molenbeek, Cureghem vs. affluent south). Guided by Bruxelles Environnement and FARI ethical AI frameworks.
-                </p>
-              </div>
-              <div className="border-l-2 border-[#c2410c] pl-3.5">
-                <h4 className="font-bold text-slate-900 mb-1">Amsterdam</h4>
-                <p className="leading-relaxed">
-                  Pioneer in algorithmic accountability via the Amsterdam Algorithm Register. Audited across historic center density and post-war estates (Nieuw-West, Zuidoost).
-                </p>
-              </div>
-              <div className="border-l-2 border-amber-600 pl-3.5">
-                <h4 className="font-bold text-slate-900 mb-1">Istanbul</h4>
-                <p className="leading-relaxed">
-                  Extreme density and UHI in historic/industrial corridors (Fatih, Bağcılar) contrasting with the northern green belt. Audited using İPA urban climate reports.
-                </p>
-              </div>
-              <div className="border-l-2 border-sky-600 pl-3.5">
-                <h4 className="font-bold text-slate-900 mb-1">Izmir</h4>
-                <p className="leading-relaxed">
-                  Mediterranean microclimate with severe central heat accumulation (Konak, Buca) and high coastal elderly demographics (Karşıyaka). Based on İZKA/İZPA data.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
-  );
-}
+              <div className="text-stone-600 text-[11px] font-medium flex items-center gap
+            
