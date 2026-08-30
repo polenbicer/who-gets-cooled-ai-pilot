@@ -77,7 +77,7 @@ type Neighbourhood = {
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREdQHMp0P_JjheI_LaV__Ds8AhETMiRwH3BX9GUIbwHTG_Y0JmAim-at3d4whwILQxOYJLws28-fjH/pub?output=csv";
 
-// Coğrafi Koordinatlar
+// Geographic Coordinates
 const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   // Brussels
   'Marolles': { lat: 50.8385, lng: 4.3468 },
@@ -162,7 +162,6 @@ function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
     const values = parseRow(line);
     const rawCityStr = (values[cityIdx] || '').trim();
 
-    // Türkçe karakter güvenli eşleştirme
     let city: City = 'Brussels';
     if (/amsterdam/i.test(rawCityStr)) {
       city = 'Amsterdam';
@@ -1019,18 +1018,18 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Core Risk Operationalisation Formula Box */}
+          {/* Core Risk Operationalisation Formula Box (Fixed JSX string escaping) */}
           <div className="mb-10 rounded-2xl border border-stone-200 bg-white p-6 shadow-xs">
             <h3 className="text-sm font-bold uppercase tracking-wider text-[#c2410c] mb-2 flex items-center gap-2">
               <Compass className="size-4" /> IPCC Climate Risk Operationalisation
             </h3>
             <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 text-center my-3">
               <p className="font-mono text-sm md:text-base font-bold text-slate-900">
-                $$\text{Urban Heat Priority Score} = w_{\text{heat}} \cdot \text{Hazard (LST Proxy)} + w_{\text{social}} \cdot \left[ \frac{\text{Age 65+} + \text{Income Vulnerability}}{2} \right]$$
+                Urban Heat Priority Score = (w_heat × Heat Proxy) + [w_social × ((Age 65+ + Income Vulnerability) / 2)]
               </p>
             </div>
             <p className="text-xs text-stone-600 leading-relaxed">
-              Grounded in the IPCC Risk Framework ($\text{Risk} = \text{Hazard} \times \text{Exposure} \times \text{Vulnerability}$), the model converts raw administrative data into standardised 1–5 relative scores within each city. The weights ($w$) are not mathematical truths—they represent <strong>normative political choices</strong> made by human decision-makers.
+              Grounded in the IPCC Risk Framework (Risk = Hazard × Exposure × Vulnerability), the model converts raw administrative data into standardised 1–5 relative scores within each city. The weights (w) are not mathematical truths—they represent <strong>normative political choices</strong> made by human decision-makers.
             </p>
           </div>
 
