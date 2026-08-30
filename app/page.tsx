@@ -267,16 +267,24 @@ export default function Home() {
   const [applyShelter, setApplyShelter] = useState<boolean>(false);
   const [applyRetrofit, setApplyRetrofit] = useState<boolean>(false);
 
-  useEffect(() => {
+ useEffect(() => {
     fetch(CSV_URL)
       .then(res => res.text())
       .then(csvText => {
         const parsed = parseNeighbourhoodCSV(csvText);
         if (parsed.length > 0) {
-          setData(parsed);
+          // Google Sheet'ten gelen verileri al, eksik şehir varsa default listeden tamamla
+          setData(prev => {
+            const parsedCities = new Set(parsed.map(item => item.city));
+            const missingDefaults = defaultNeighbourhoods.filter(item => !parsedCities.has(item.city));
+            return [...parsed, ...missingDefaults];
+          });
         }
       })
-      .catch(err => console.error('Error fetching live Google Sheet:', err));
+      .catch(err => {
+        console.error('Error fetching live Google Sheet, using fallback:', err);
+        setData(defaultNeighbourhoods);
+      });
   }, []);
 
   const baselineRanks = useMemo(() => {
