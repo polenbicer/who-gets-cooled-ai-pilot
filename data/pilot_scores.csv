@@ -1,0 +1,11 @@
+city,area_name,relative_heat_proxy_score_1_5,age_vulnerability_score_1_5,income_vulnerability_score_1_5,ai_profile
+Brussels,Marolles,4.79,2.26,4.87,High heat + income vulnerability
+Brussels,Molenbeek Historique,4.77,1.54,5.00,High heat + income vulnerability
+Brussels,Cureghem Bara,5.00,1.00,4.95,High heat + income vulnerability
+Brussels,Chatelain,4.23,1.35,2.56,High heat + income vulnerability
+Brussels,Vivier d'Oie,1.00,5.00,1.00,Age vulnerability + lower heat
+Amsterdam,Amsterdamse Poort e.o.,1.17,1.00,5.00,Income vulnerability + lower heat
+Amsterdam,De Kolenkit,1.46,1.30,4.62,Income vulnerability + lower heat
+Amsterdam,Burgwallen-Oude Zijde,5.00,1.89,4.90,High heat + income vulnerability
+Amsterdam,Apollobuurt,2.08,4.23,1.00,Age vulnerability + lower heat
+Amsterdam,Buitenveldert-West,1.00,5.00,3.97,Age vulnerability + lower heat
