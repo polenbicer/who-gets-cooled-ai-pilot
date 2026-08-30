@@ -5,10 +5,14 @@ import {
   ArrowRight,
   BrainCircuit,
   Building2,
+  CheckCircle2,
+  FileSpreadsheet,
   Flame,
   Info,
   Layers,
+  Scale,
   Search,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Sliders,
@@ -173,9 +177,9 @@ const defaultNeighbourhoods: Neighbourhood[] = [
 ];
 
 const scenarios: Record<Scenario, { label: string; heatWeight: number; socialWeight: number; note: string }> = {
-  heat: { label: 'Heat-first', heatWeight: 0.7, socialWeight: 0.3, note: 'Prioritises physical heat exposure.' },
-  balanced: { label: 'Balanced', heatWeight: 0.5, socialWeight: 0.5, note: 'Gives equal weight to heat and social vulnerability.' },
-  justice: { label: 'Justice-first', heatWeight: 0.3, socialWeight: 0.7, note: 'Prioritises social vulnerability in the allocation rule.' },
+  heat: { label: 'Heat-first', heatWeight: 0.7, socialWeight: 0.3, note: 'Prioritises physical heat exposure and surface temperature anomalies.' },
+  balanced: { label: 'Balanced', heatWeight: 0.5, socialWeight: 0.5, note: 'Gives equal normative weight to thermal risk and demographic vulnerability.' },
+  justice: { label: 'Justice-first', heatWeight: 0.3, socialWeight: 0.7, note: 'Prioritises socio-economic inequality and elderly isolation in cooling allocation.' },
 };
 
 const chartConfig = {
@@ -345,7 +349,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#fafaf9] text-slate-900 font-sans selection:bg-slate-200">
-      {/* Header */}
+      {/* Top Navigation Bar */}
       <header className="border-b border-stone-200 bg-white/95 backdrop-blur-sm sticky top-0 z-30">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-5 py-3.5 md:px-8">
           <div className="flex items-center gap-2">
@@ -408,9 +412,6 @@ export default function Home() {
               <p className="mt-4 text-sm leading-relaxed text-stone-600 md:text-base">
                 An open research prototype investigating the intersection of algorithmic governance, urban climate adaptation, and environmental justice. By auditing how local governments in Brussels and Amsterdam deploy data-driven cooling interventions, this tool examines whether AI-assisted allocation protects the most vulnerable populations or reinforces spatial inequalities.
               </p>
-              <p className="mt-4 inline-flex items-center rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-600 shadow-xs">
-                Developed by&nbsp;<strong className="font-semibold text-slate-900">Polen Bicer</strong>
-              </p>
             </div>
 
             <div className="relative">
@@ -443,7 +444,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Interactive Weight Simulator */}
+          {/* Interactive Policy Weight Simulator */}
           <div className="p-5 mb-6 rounded-xl border border-stone-200 bg-white shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
@@ -701,7 +702,7 @@ export default function Home() {
                 </CardContent>
               </Card>
 
-              {/* Notice */}
+              {/* Limitation Notice */}
               <div className="rounded-xl border border-stone-200 bg-stone-100/70 p-4 text-slate-800 text-xs">
                 <p className="flex items-center gap-1.5 font-bold text-slate-900"><Info className="size-3.5 text-stone-600" /> Methodological Note</p>
                 <p className="mt-1 text-[11px] text-stone-600 leading-relaxed">
@@ -712,62 +713,143 @@ export default function Home() {
           </section>
         </div>
       ) : (
-        /* Methodology Tab */
-        <div className="mx-auto max-w-[1200px] px-5 py-10 md:px-8">
+        /* EXPANDED METHODOLOGY & ANALYTICAL FRAMEWORK TAB */
+        <div className="mx-auto max-w-[1240px] px-5 py-10 md:px-8">
           <div className="mb-10 text-center md:text-left">
-            <h2 className="text-3xl font-serif font-bold tracking-tight text-slate-950">
-              Methodology & Analytical Framework
+            <Badge variant="outline" className="mb-3 border-stone-300 bg-stone-100 text-stone-700 text-xs font-medium">
+              Academic & Analytical Blueprint
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold tracking-tight text-slate-950">
+              Methodology & Theoretical Framework
             </h2>
             <p className="mt-3 text-sm md:text-base text-stone-600 max-w-3xl leading-relaxed">
-              This research prototype investigates the algorithmic governance of urban heat adaptation, auditing how data-driven climate interventions are justified and deployed across socio-spatial inequalities in Brussels and Amsterdam.
+              This research prototype investigates the algorithmic governance of urban climate adaptation. By auditing socio-spatial trade-offs in Brussels and Amsterdam, it examines how data modeling shapes environmental justice outcomes.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">01</span>
-                <h3 className="font-bold text-base text-slate-900">Socio-Spatial Environmental Justice</h3>
-              </div>
-              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
-                Urban heat islands (UHI) disproportionately affect socially vulnerable neighborhoods with lower tree canopy density and higher building density. This prototype maps surface temperature anomalies against socio-economic vulnerability indicators to audit cooling disparities.
-              </p>
-            </div>
+          {/* Section 1: Data Operationalisation & Metric Rationale */}
+          <div className="mb-12">
+            <h3 className="text-lg font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
+              <FileSpreadsheet className="size-5 text-[#c2410c]" /> 1. Data Operationalisation & Indicator Rationale
+            </h3>
+            <p className="text-xs md:text-sm text-stone-600 mb-6 leading-relaxed">
+              Algorithmic scoring models are never neutral; the choice of indicators defines what the municipal bureaucracy sees and what it ignores. Our dataset operationalises three foundational dimensions:
+            </p>
 
-            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">02</span>
-                <h3 className="font-bold text-base text-slate-900">Algorithmic Legitimacy Chain</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Metric 1: Heat Proxy */}
+              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
+                    <Flame className="size-4" />
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">Thermal Risk Proxy (1-5)</h4>
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  <strong>Operational Definition:</strong> Composite indicator based on Copernicus Land Surface Temperature (LST) anomalies and high soil imperviousness (sealed concrete/asphalt ratio).
+                </p>
+                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
+                  <strong>Why it matters:</strong> Densely built urban fabrics with minimal tree canopy create severe Urban Heat Islands (UHI), preventing nocturnal cooling.
+                </p>
               </div>
-              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
-                Drawing on Fritz Scharpf and Vivien Schmidt&apos;s legitimacy framework, policies are evaluated across:
-              </p>
-              <ul className="mt-3 space-y-1.5 text-xs text-stone-600 list-disc list-inside">
-                <li><strong>Input Legitimacy:</strong> Citizen participation and vulnerable community inclusion.</li>
-                <li><strong>Throughput Legitimacy:</strong> Procedural transparency and algorithmic register oversight.</li>
-                <li><strong>Output Legitimacy:</strong> Measurable heat mitigation and public welfare outcomes.</li>
-              </ul>
-            </div>
 
-            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">03</span>
-                <h3 className="font-bold text-base text-slate-900">Comparative Case Strategy</h3>
+              {/* Metric 2: Elderly Vulnerability */}
+              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                    <Users className="size-4" />
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">Age Vulnerability (65+)</h4>
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  <strong>Operational Definition:</strong> Proportion of residents aged 65 and above, weighted by single-person household density from municipal census registries.
+                </p>
+                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
+                  <strong>Why it matters:</strong> Physiological thermoregulation decline combined with social isolation makes elderly residents the primary demographic for heat-wave mortality.
+                </p>
               </div>
-              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
-                <strong>Brussels Capital Region:</strong> Multi-level governance, FARI AI for Common Good Institute, and Bruxelles Environnement climate resilience frameworks.<br className="mb-2"/>
-                <strong>Amsterdam:</strong> Pioneering algorithmic disclosure via the Amsterdam Algorithm Register and automated spatial decision tools.
-              </p>
-            </div>
 
-            <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="p-2 rounded-md bg-slate-900 text-white font-mono font-bold text-xs">04</span>
-                <h3 className="font-bold text-base text-slate-900">Data Pipeline & Decision Audit</h3>
+              {/* Metric 3: Income Vulnerability */}
+              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="p-2 rounded-lg bg-sky-50 text-sky-600">
+                    <ShieldAlert className="size-4" />
+                  </div>
+                  <h4 className="font-bold text-sm text-slate-900">Income Vulnerability</h4>
+                </div>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  <strong>Operational Definition:</strong> Standardised inverse of median household disposable income and low-income subsidy dependency rate.
+                </p>
+                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
+                  <strong>Why it matters:</strong> Low-income households face severe &apos;thermal energy poverty&apos;, lack private air-conditioning, and reside in poorly insulated rental housing.
+                </p>
               </div>
-              <p className="text-xs md:text-sm text-stone-600 leading-relaxed">
-                The decision-support audit cross-references satellite thermal observations (Copernicus Land Monitoring Service), municipal tree inventory data, and census-level socioeconomic vulnerability to calculate the <em>Cooling Priority Index</em>.
-              </p>
+            </div>
+          </div>
+
+          {/* Section 2: Algorithmic Legitimacy Framework */}
+          <div className="mb-12">
+            <h3 className="text-lg font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
+              <Scale className="size-5 text-[#c2410c]" /> 2. Algorithmic Legitimacy Chain
+            </h3>
+            <p className="text-xs md:text-sm text-stone-600 mb-6 leading-relaxed">
+              Grounded in the political science framework of Fritz Scharpf and Vivien Schmidt, we conceptualise automated decision-support systems along a three-stage democratic legitimacy chain:
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-xs font-bold text-[#c2410c] px-2 py-0.5 rounded bg-amber-50">INPUT</span>
+                  <h4 className="font-bold text-sm text-slate-900">Input Legitimacy</h4>
+                </div>
+                <p className="text-xs font-semibold text-stone-700 mb-1">Democratic Voice & Problem Framing</p>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Who decided what counts as a climate vulnerability? Evaluates participatory co-design, stakeholder representation, and whether vulnerable communities participated in setting optimization objectives.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-xs font-bold text-slate-700 px-2 py-0.5 rounded bg-stone-100">THROUGHPUT</span>
+                  <h4 className="font-bold text-sm text-slate-900">Throughput Legitimacy</h4>
+                </div>
+                <p className="text-xs font-semibold text-stone-700 mb-1">Procedural & Algorithmic Quality</p>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Is the scoring mechanism explainable and accountable? Focuses on public algorithm registries (e.g., Amsterdam Algorithm Register), transparent weighting schemes, and human-in-the-loop governance.
+                </p>
+              </div>
+
+              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-xs font-bold text-emerald-700 px-2 py-0.5 rounded bg-emerald-50">OUTPUT</span>
+                  <h4 className="font-bold text-sm text-slate-900">Output Legitimacy</h4>
+                </div>
+                <p className="text-xs font-semibold text-stone-700 mb-1">Substantive Justice & Efficiency</p>
+                <p className="text-xs text-stone-600 leading-relaxed">
+                  Does the data-driven intervention actually cool the people who need it most? Audits whether tree-planting and cooling hubs prevent climate mortality without triggering green gentrification.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Comparative Urban Governance Case Strategy */}
+          <div className="p-6 rounded-xl border border-stone-200 bg-white shadow-xs">
+            <h3 className="text-base font-bold text-slate-900 font-serif mb-4 flex items-center gap-2">
+              <Building2 className="size-4 text-[#c2410c]" /> 3. Comparative Urban Governance Context
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm text-stone-600">
+              <div className="border-l-2 border-slate-900 pl-4">
+                <h4 className="font-bold text-slate-900 mb-1">Brussels-Capital Region</h4>
+                <p className="leading-relaxed">
+                  Characterised by high socio-spatial polarization along the canal zone (e.g., Molenbeek, Cureghem vs. affluent green south). Institutional frameworks include Bruxelles Environnement climate plans and FARI (AI for the Common Good Institute) for ethical public algorithmic tools.
+                </p>
+              </div>
+              <div className="border-l-2 border-[#c2410c] pl-4">
+                <h4 className="font-bold text-slate-900 mb-1">City of Amsterdam</h4>
+                <p className="leading-relaxed">
+                  A global pioneer in algorithmic transparency via the mandatory Amsterdam Algorithm Register. Analyzed through its automated urban tree monitoring, climate adaptation maps, and post-war housing estate regeneration (Nieuw-West, Zuidoost).
+                </p>
+              </div>
             </div>
           </div>
         </div>
