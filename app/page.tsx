@@ -77,7 +77,7 @@ type Neighbourhood = {
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vREdQHMp0P_JjheI_LaV__Ds8AhETMiRwH3BX9GUIbwHTG_Y0JmAim-at3d4whwILQxOYJLws28-fjH/pub?output=csv";
 
-// Coğrafi Koordinatlar (4 Şehir)
+// Coğrafi Koordinatlar
 const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   // Brussels
   'Marolles': { lat: 50.8385, lng: 4.3468 },
@@ -162,7 +162,7 @@ function parseNeighbourhoodCSV(csvText: string): Neighbourhood[] {
     const values = parseRow(line);
     const rawCityStr = (values[cityIdx] || '').trim();
 
-    // Türkçe karakter (İ / ı / I / i) bağımsız akıllı şehir eşleştirme
+    // Türkçe karakter güvenli eşleştirme
     let city: City = 'Brussels';
     if (/amsterdam/i.test(rawCityStr)) {
       city = 'Amsterdam';
@@ -571,7 +571,7 @@ export default function Home() {
             </div>
           </section>
 
-          {/* HIGH-IMPACT INTERACTIVE POLICY CONTROL DECK (4 Cities) */}
+          {/* POLICY CONTROL DECK (4 Cities) */}
           <section className="mb-8 rounded-2xl border-2 border-slate-900/10 bg-white p-5 md:p-6 shadow-md ring-1 ring-slate-900/5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-stone-100 pb-4 mb-5">
               <div className="flex items-center gap-2.5">
