@@ -76,33 +76,53 @@ type Neighbourhood = {
 };
 
 const DATASETS: Neighbourhood[] = [
-  // Brussels (5)
-  { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.54, income: 5.00, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Cureghem Bara', heat: 5.00, age: 1.00, income: 4.95, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Châtelain', heat: 4.23, age: 1.35, income: 2.56, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: "Vivier d'Oie", heat: 1.00, age: 5.00, income: 1.00, profile: 'Age vulnerability + lower heat' },
+  // Amsterdam (10)
+  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.73, age: 1.90, income: 5.00, profile: 'High income vulnerability / subsidy dependency' },
+  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.98, age: 2.13, income: 4.62, profile: 'High income vulnerability / subsidy dependency' },
+  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5.00, age: 2.59, income: 4.90, profile: 'High heat + income vulnerability' },
+  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.50, age: 4.40, income: 1.00, profile: 'High elderly demographic vulnerability' },
+  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1.58, age: 5.00, income: 3.97, profile: 'High elderly demographic vulnerability' },
+  { city: 'Amsterdam', name: 'Indische Buurt-Oost', heat: 1.63, age: 4.13, income: 4.84, profile: 'High elderly demographic vulnerability' },
+  { city: 'Amsterdam', name: 'Nieuw-West', heat: 1.40, age: 3.14, income: 4.49, profile: 'High income vulnerability / subsidy dependency' },
+  { city: 'Amsterdam', name: 'Noord', heat: 1.00, age: 3.53, income: 4.48, profile: 'High income vulnerability / subsidy dependency' },
+  { city: 'Amsterdam', name: 'Oost', heat: 1.58, age: 2.93, income: 4.02, profile: 'High income vulnerability / subsidy dependency' },
+  { city: 'Amsterdam', name: 'Zuidas', heat: 2.05, age: 1.00, income: 3.99, profile: 'Balanced urban profile / lower thermal risk' },
 
-  // Amsterdam (5)
-  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5.00, age: 1.89, income: 4.90, profile: 'High heat + income vulnerability' },
-  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.17, age: 1.00, income: 5.00, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.46, age: 1.30, income: 4.62, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.08, age: 4.23, income: 1.00, profile: 'Age vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1.00, age: 5.00, income: 3.97, profile: 'Age vulnerability + lower heat' },
+  // Brussels (10)
+  { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.33, income: 4.87, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.63, income: 5.00, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Cureghem Bara', heat: 5.00, age: 1.10, income: 4.95, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Châtelain', heat: 4.23, age: 1.45, income: 2.56, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: "Vivier d'Oie", heat: 1.00, age: 5.00, income: 1.00, profile: 'High elderly demographic vulnerability' },
+  { city: 'Brussels', name: 'Colignon', heat: 4.54, age: 1.57, income: 4.28, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Saint-Josse Centre', heat: 4.71, age: 1.47, income: 4.56, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Matonge', heat: 4.84, age: 1.00, income: 3.66, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Auderghem centre', heat: 3.22, age: 3.07, income: 1.92, profile: 'Balanced urban profile / lower thermal risk' },
+  { city: 'Brussels', name: 'Observatoire', heat: 1.80, age: 4.48, income: 1.56, profile: 'High elderly demographic vulnerability' },
 
-  // Istanbul (5)
-  { city: 'Istanbul', name: 'Fatih', heat: 4.85, age: 3.80, income: 4.70, profile: 'High density historic core + socioeconomic vulnerability' },
-  { city: 'Istanbul', name: 'Bağcılar', heat: 5.00, age: 1.20, income: 5.00, profile: 'Extreme impervious surface + low income vulnerability' },
-  { city: 'Istanbul', name: 'Kadıköy', heat: 3.40, age: 5.00, income: 1.20, profile: 'High age vulnerability + coastal heat exposure' },
-  { city: 'Istanbul', name: 'Sarıyer', heat: 1.00, age: 2.60, income: 1.00, profile: 'Northern green corridor + lower thermal risk' },
-  { city: 'Istanbul', name: 'Esenyurt', heat: 4.50, age: 1.00, income: 4.80, profile: 'High residential mass + income vulnerability' },
+  // Istanbul (10)
+  { city: 'Istanbul', name: 'Bağcılar', heat: 5.00, age: 1.30, income: 3.93, profile: 'High heat + income vulnerability' },
+  { city: 'Istanbul', name: 'Esenyurt', heat: 4.45, age: 1.00, income: 3.84, profile: 'High heat + income vulnerability' },
+  { city: 'Istanbul', name: 'Fatih', heat: 4.77, age: 3.03, income: 2.78, profile: 'High heat + income vulnerability' },
+  { city: 'Istanbul', name: 'Sultanbeyli', heat: 4.20, age: 1.00, income: 5.00, profile: 'High heat + income vulnerability' },
+  { city: 'Istanbul', name: 'Ümraniye', heat: 3.79, age: 1.66, income: 3.28, profile: 'Balanced urban profile / lower thermal risk' },
+  { city: 'Istanbul', name: 'Şişli', heat: 4.09, age: 2.91, income: 1.00, profile: 'High heat + income vulnerability' },
+  { city: 'Istanbul', name: 'Bakırköy', heat: 3.20, age: 3.97, income: 2.63, profile: 'Balanced urban profile / lower thermal risk' },
+  { city: 'Istanbul', name: 'Kadıköy', heat: 3.12, age: 5.00, income: 2.36, profile: 'High elderly demographic vulnerability' },
+  { city: 'Istanbul', name: 'Beşiktaş', heat: 2.43, age: 4.20, income: 1.68, profile: 'High elderly demographic vulnerability' },
+  { city: 'Istanbul', name: 'Sarıyer', heat: 1.00, age: 2.58, income: 3.34, profile: 'Balanced urban profile / lower thermal risk' },
 
-  // Izmir (5)
-  { city: 'Izmir', name: 'Konak', heat: 4.90, age: 3.60, income: 4.80, profile: 'Historic central basin + severe UHI & income vulnerability' },
-  { city: 'Izmir', name: 'Buca', heat: 4.70, age: 2.10, income: 4.20, profile: 'Dense urban fabric + moderate-to-low income vulnerability' },
-  { city: 'Izmir', name: 'Karşıyaka', heat: 3.20, age: 5.00, income: 1.40, profile: 'High elderly demographic vulnerability + coastal exposure' },
-  { city: 'Izmir', name: 'Bornova', heat: 4.20, age: 2.50, income: 3.60, profile: 'Inland plain thermal accumulation + mixed profile' },
-  { city: 'Izmir', name: 'Balçova', heat: 1.00, age: 4.10, income: 1.60, profile: 'Thermal/green microclimate buffer + lower physical heat' },
+  // Izmir (10)
+  { city: 'Izmir', name: 'Konak', heat: 5.00, age: 4.81, income: 1.00, profile: 'High heat + income vulnerability' },
+  { city: 'Izmir', name: 'Karabağlar', heat: 4.59, age: 2.77, income: 4.64, profile: 'High heat + income vulnerability' },
+  { city: 'Izmir', name: 'Buca', heat: 4.69, age: 1.78, income: 4.42, profile: 'High heat + income vulnerability' },
+  { city: 'Izmir', name: 'Bornova', heat: 4.19, age: 2.17, income: 1.65, profile: 'High heat + income vulnerability' },
+  { city: 'Izmir', name: 'Menemen', heat: 2.50, age: 1.00, income: 5.00, profile: 'High income vulnerability / subsidy dependency' },
+  { city: 'Izmir', name: 'Gaziemir', heat: 3.68, age: 1.79, income: 3.25, profile: 'Balanced urban profile / lower thermal risk' },
+  { city: 'Izmir', name: 'Çiğli', heat: 3.35, age: 2.05, income: 3.18, profile: 'Balanced urban profile / lower thermal risk' },
+  { city: 'Izmir', name: 'Karşıyaka', heat: 2.94, age: 5.00, income: 2.89, profile: 'High elderly demographic vulnerability' },
+  { city: 'Izmir', name: 'Balçova', heat: 1.21, age: 4.81, income: 1.87, profile: 'High elderly demographic vulnerability' },
+  { city: 'Izmir', name: 'Çeşme', heat: 1.00, age: 4.74, income: 3.33, profile: 'High elderly demographic vulnerability' },
 ];
 
 const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
@@ -112,6 +132,11 @@ const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   'Cureghem Bara': { lat: 50.8402, lng: 4.3308 },
   'Châtelain': { lat: 50.8242, lng: 4.3601 },
   "Vivier d'Oie": { lat: 50.7892, lng: 4.3755 },
+  'Colignon': { lat: 50.8580, lng: 4.3750 },
+  'Saint-Josse Centre': { lat: 50.8500, lng: 4.3700 },
+  'Matonge': { lat: 50.8350, lng: 4.3680 },
+  'Auderghem centre': { lat: 50.8120, lng: 4.4320 },
+  'Observatoire': { lat: 50.7980, lng: 4.3600 },
 
   // Amsterdam
   'Burgwallen-Oude Zijde': { lat: 52.3718, lng: 4.8980 },
@@ -119,6 +144,11 @@ const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   'De Kolenkit': { lat: 52.3785, lng: 4.8480 },
   'Apollobuurt': { lat: 52.3485, lng: 4.8770 },
   'Buitenveldert-West': { lat: 52.3275, lng: 4.8620 },
+  'Indische Buurt-Oost': { lat: 52.3650, lng: 4.9380 },
+  'Nieuw-West': { lat: 52.3680, lng: 4.8100 },
+  'Noord': { lat: 52.3950, lng: 4.9100 },
+  'Oost': { lat: 52.3580, lng: 4.9200 },
+  'Zuidas': { lat: 52.3380, lng: 4.8720 },
 
   // Istanbul
   'Fatih': { lat: 41.0182, lng: 28.9437 },
@@ -126,6 +156,11 @@ const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   'Kadıköy': { lat: 40.9910, lng: 29.0270 },
   'Sarıyer': { lat: 41.1680, lng: 29.0550 },
   'Esenyurt': { lat: 41.0340, lng: 28.6800 },
+  'Sultanbeyli': { lat: 40.9650, lng: 29.2680 },
+  'Ümraniye': { lat: 41.0250, lng: 29.1150 },
+  'Şişli': { lat: 41.0590, lng: 28.9850 },
+  'Bakırköy': { lat: 40.9800, lng: 28.8750 },
+  'Beşiktaş': { lat: 41.0430, lng: 29.0070 },
 
   // Izmir
   'Konak': { lat: 38.4189, lng: 27.1287 },
@@ -133,6 +168,11 @@ const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   'Karşıyaka': { lat: 38.4590, lng: 27.1100 },
   'Bornova': { lat: 38.4650, lng: 27.2180 },
   'Balçova': { lat: 38.3880, lng: 27.0500 },
+  'Karabağlar': { lat: 38.3750, lng: 27.1250 },
+  'Menemen': { lat: 38.6050, lng: 27.0680 },
+  'Gaziemir': { lat: 38.3250, lng: 27.1350 },
+  'Çiğli': { lat: 38.4850, lng: 27.0780 },
+  'Çeşme': { lat: 38.3220, lng: 26.3050 },
 };
 
 const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
@@ -1003,7 +1043,7 @@ export default function Home() {
           </section>
         </div>
       ) : (
-        /* METHODOLOGY & ANALYTICAL FRAMEWORK TAB */
+        {/* METHODOLOGY & ANALYTICAL FRAMEWORK TAB */}
         <div className="mx-auto max-w-[1240px] px-5 py-10 md:px-8">
           <div className="mb-10 text-center md:text-left">
             <Badge variant="outline" className="mb-3 border-stone-300 bg-stone-100 text-stone-700 text-xs font-medium">
