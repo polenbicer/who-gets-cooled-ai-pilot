@@ -18,7 +18,6 @@ import {
   ShieldCheck,
   Sliders,
   Sparkles,
-  Trees,
   TrendingDown,
   TrendingUp,
   Users,
@@ -63,7 +62,7 @@ import {
 } from '@/components/ui/table';
 
 type City = 'Brussels' | 'Amsterdam' | 'Istanbul' | 'Izmir';
-type Scenario = 'heat' | 'balanced' | 'justice' | 'green';
+type Scenario = 'heat' | 'balanced' | 'justice';
 
 type Neighbourhood = {
   city: City;
@@ -71,7 +70,6 @@ type Neighbourhood = {
   heat: number;
   age: number;
   income: number;
-  canopyDeficit: number;
   profile: string;
   lat?: number;
   lng?: number;
@@ -79,32 +77,32 @@ type Neighbourhood = {
 
 const DATASETS: Neighbourhood[] = [
   // Brussels (5)
-  { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, canopyDeficit: 4.80, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.54, income: 5.00, canopyDeficit: 4.90, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Cureghem Bara', heat: 5.00, age: 1.00, income: 4.95, canopyDeficit: 4.95, profile: 'High heat + income vulnerability' },
-  { city: 'Brussels', name: 'Châtelain', heat: 4.23, age: 1.35, income: 2.56, canopyDeficit: 3.40, profile: 'High heat + moderate canopy deficit' },
-  { city: 'Brussels', name: "Vivier d'Oie", heat: 1.00, age: 5.00, income: 1.00, canopyDeficit: 1.10, profile: 'Age vulnerability + forested buffer' },
+  { city: 'Brussels', name: 'Marolles', heat: 4.79, age: 2.26, income: 4.87, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Molenbeek Historique', heat: 4.77, age: 1.54, income: 5.00, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Cureghem Bara', heat: 5.00, age: 1.00, income: 4.95, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: 'Châtelain', heat: 4.23, age: 1.35, income: 2.56, profile: 'High heat + income vulnerability' },
+  { city: 'Brussels', name: "Vivier d'Oie", heat: 1.00, age: 5.00, income: 1.00, profile: 'Age vulnerability + lower heat' },
 
   // Amsterdam (5)
-  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5.00, age: 1.89, income: 4.90, canopyDeficit: 4.85, profile: 'High heat + income vulnerability' },
-  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.17, age: 1.00, income: 5.00, canopyDeficit: 2.20, profile: 'Income vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.46, age: 1.30, income: 4.62, canopyDeficit: 3.10, profile: 'Income vulnerability + moderate canopy deficit' },
-  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.08, age: 4.23, income: 1.00, canopyDeficit: 1.60, profile: 'Age vulnerability + lower heat' },
-  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1.00, age: 5.00, income: 3.97, canopyDeficit: 1.20, profile: 'Age vulnerability + high green cover' },
+  { city: 'Amsterdam', name: 'Burgwallen-Oude Zijde', heat: 5.00, age: 1.89, income: 4.90, profile: 'High heat + income vulnerability' },
+  { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.17, age: 1.00, income: 5.00, profile: 'Income vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.46, age: 1.30, income: 4.62, profile: 'Income vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Apollobuurt', heat: 2.08, age: 4.23, income: 1.00, profile: 'Age vulnerability + lower heat' },
+  { city: 'Amsterdam', name: 'Buitenveldert-West', heat: 1.00, age: 5.00, income: 3.97, profile: 'Age vulnerability + lower heat' },
 
   // Istanbul (5)
-  { city: 'Istanbul', name: 'Fatih', heat: 4.85, age: 3.80, income: 4.70, canopyDeficit: 4.90, profile: 'High density historic core + socioeconomic vulnerability' },
-  { city: 'Istanbul', name: 'Bağcılar', heat: 5.00, age: 1.20, income: 5.00, canopyDeficit: 5.00, profile: 'Extreme impervious surface + low income vulnerability' },
-  { city: 'Istanbul', name: 'Kadıköy', heat: 3.40, age: 5.00, income: 1.20, canopyDeficit: 2.80, profile: 'High age vulnerability + coastal heat exposure' },
-  { city: 'Istanbul', name: 'Sarıyer', heat: 1.00, age: 2.60, income: 1.00, canopyDeficit: 1.00, profile: 'Northern green corridor + lower thermal risk' },
-  { city: 'Istanbul', name: 'Esenyurt', heat: 4.50, age: 1.00, income: 4.80, canopyDeficit: 4.60, profile: 'High residential mass + income vulnerability' },
+  { city: 'Istanbul', name: 'Fatih', heat: 4.85, age: 3.80, income: 4.70, profile: 'High density historic core + socioeconomic vulnerability' },
+  { city: 'Istanbul', name: 'Bağcılar', heat: 5.00, age: 1.20, income: 5.00, profile: 'Extreme impervious surface + low income vulnerability' },
+  { city: 'Istanbul', name: 'Kadıköy', heat: 3.40, age: 5.00, income: 1.20, profile: 'High age vulnerability + coastal heat exposure' },
+  { city: 'Istanbul', name: 'Sarıyer', heat: 1.00, age: 2.60, income: 1.00, profile: 'Northern green corridor + lower thermal risk' },
+  { city: 'Istanbul', name: 'Esenyurt', heat: 4.50, age: 1.00, income: 4.80, profile: 'High residential mass + income vulnerability' },
 
   // Izmir (5)
-  { city: 'Izmir', name: 'Konak', heat: 4.90, age: 3.60, income: 4.80, canopyDeficit: 4.70, profile: 'Historic central basin + severe UHI & income vulnerability' },
-  { city: 'Izmir', name: 'Buca', heat: 4.70, age: 2.10, income: 4.20, canopyDeficit: 4.50, profile: 'Dense urban fabric + moderate-to-low income vulnerability' },
-  { city: 'Izmir', name: 'Karşıyaka', heat: 3.20, age: 5.00, income: 1.40, canopyDeficit: 2.40, profile: 'High elderly demographic vulnerability + coastal exposure' },
-  { city: 'Izmir', name: 'Bornova', heat: 4.20, age: 2.50, income: 3.60, canopyDeficit: 3.50, profile: 'Inland plain thermal accumulation + mixed profile' },
-  { city: 'Izmir', name: 'Balçova', heat: 1.00, age: 4.10, income: 1.60, canopyDeficit: 1.30, profile: 'Thermal/green microclimate buffer + lower physical heat' },
+  { city: 'Izmir', name: 'Konak', heat: 4.90, age: 3.60, income: 4.80, profile: 'Historic central basin + severe UHI & income vulnerability' },
+  { city: 'Izmir', name: 'Buca', heat: 4.70, age: 2.10, income: 4.20, profile: 'Dense urban fabric + moderate-to-low income vulnerability' },
+  { city: 'Izmir', name: 'Karşıyaka', heat: 3.20, age: 5.00, income: 1.40, profile: 'High elderly demographic vulnerability + coastal exposure' },
+  { city: 'Izmir', name: 'Bornova', heat: 4.20, age: 2.50, income: 3.60, profile: 'Inland plain thermal accumulation + mixed profile' },
+  { city: 'Izmir', name: 'Balçova', heat: 1.00, age: 4.10, income: 1.60, profile: 'Thermal/green microclimate buffer + lower physical heat' },
 ];
 
 const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
@@ -144,45 +142,24 @@ const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
   Izmir: { lat: 38.4200, lng: 27.1400, zoom: 11 },
 };
 
-const scenarios: Record<Scenario, { 
-  label: string; 
-  heatWeight: number; 
-  ageWeight: number; 
-  incomeWeight: number; 
-  canopyWeight: number; 
-  note: string 
-}> = {
+const scenarios: Record<Scenario, { label: string; heatWeight: number; socialWeight: number; note: string }> = {
   heat: { 
-    label: 'Heat-First (60/15/15/10)', 
-    heatWeight: 60, 
-    ageWeight: 15, 
-    incomeWeight: 15, 
-    canopyWeight: 10, 
-    note: 'Prioritises physical heat exposure and surface temperature anomalies.' 
+    label: 'Technocratic Determinism (70/30)', 
+    heatWeight: 0.7, 
+    socialWeight: 0.3, 
+    note: 'Technocratic Determinism: Physical heat and impervious surfaces take absolute precedence over social inequalities.' 
   },
   balanced: { 
-    label: 'Balanced (35/25/25/15)', 
-    heatWeight: 35, 
-    ageWeight: 25, 
-    incomeWeight: 25, 
-    canopyWeight: 15, 
-    note: 'Gives equitable weight across thermal exposure, demographics, and canopy access.' 
+    label: 'Bureaucratic Compromise (50/50)', 
+    heatWeight: 0.5, 
+    socialWeight: 0.5, 
+    note: 'Bureaucratic Compromise: Artificially splits weight evenly between physical anomalies and human demographics to avoid structural friction.' 
   },
   justice: { 
-    label: 'Justice-First (20/35/35/10)', 
-    heatWeight: 20, 
-    ageWeight: 35, 
-    incomeWeight: 35, 
-    canopyWeight: 10, 
-    note: 'Prioritises socio-economic inequality and elderly isolation in cooling allocation.' 
-  },
-  green: { 
-    label: 'Canopy-Deficit (20/15/15/50)', 
-    heatWeight: 20, 
-    ageWeight: 15, 
-    incomeWeight: 15, 
-    canopyWeight: 50, 
-    note: 'Focuses climate adaptation funds directly on urban areas with severe lack of tree canopy & shade.' 
+    label: 'Radical Spatial Justice (30/70)', 
+    heatWeight: 0.3, 
+    socialWeight: 0.7, 
+    note: 'Radical Spatial Justice: Directs public cooling investments to systemic poverty and isolated elderly populations regardless of sensor dominance.' 
   },
 };
 
@@ -220,10 +197,9 @@ export default function Home() {
   const [query, setQuery] = useState('');
 
   // Policy Simulator
-  const [heatWeight, setHeatWeight] = useState<number>(30);
-  const [ageWeight, setAgeWeight] = useState<number>(25);
-  const [incomeWeight, setIncomeWeight] = useState<number>(25);
-  const [canopyWeight, setCanopyWeight] = useState<number>(20);
+  const [heatWeight, setHeatWeight] = useState<number>(34);
+  const [ageWeight, setAgeWeight] = useState<number>(33);
+  const [incomeWeight, setIncomeWeight] = useState<number>(33);
   const [isCustomWeights, setIsCustomWeights] = useState<boolean>(false);
 
   // What-If Interventions
@@ -236,7 +212,7 @@ export default function Home() {
       .filter((area) => area.city === city)
       .map((area) => {
         const social = (area.age + area.income) / 2;
-        const score = (area.heat * 0.6) + (social * 0.3) + (area.canopyDeficit * 0.1);
+        const score = area.heat * 0.7 + social * 0.3;
         return { name: area.name, score };
       })
       .sort((a, b) => b.score - a.score);
@@ -248,38 +224,27 @@ export default function Home() {
     return map;
   }, [data, city]);
 
-  const currentWeights = useMemo(() => {
-    if (isCustomWeights) {
-      return { heat: heatWeight, age: ageWeight, income: incomeWeight, canopy: canopyWeight };
-    }
-    const s = scenarios[scenario];
-    return { heat: s.heatWeight, age: s.ageWeight, income: s.incomeWeight, canopy: s.canopyWeight };
-  }, [isCustomWeights, heatWeight, ageWeight, incomeWeight, canopyWeight, scenario]);
-
   const ranked = useMemo(() => {
     const filtered = data.filter((area) => area.city === city);
-    const totalW = (currentWeights.heat + currentWeights.age + currentWeights.income + currentWeights.canopy) || 1;
-
     return filtered
       .map((area) => {
         let effectiveHeat = area.heat;
         let effectiveAge = area.age;
         let effectiveIncome = area.income;
-        let effectiveCanopyDeficit = area.canopyDeficit;
 
-        if (applyTrees) {
-          effectiveHeat = Math.max(1, effectiveHeat - 1.0);
-          effectiveCanopyDeficit = Math.max(1, effectiveCanopyDeficit - 1.5);
-        }
+        if (applyTrees) effectiveHeat = Math.max(1, effectiveHeat - 1.0);
         if (applyShelter) effectiveAge = Math.max(1, effectiveAge - 1.2);
         if (applyRetrofit) effectiveIncome = Math.max(1, effectiveIncome - 1.0);
 
-        const calculatedScore = (
-          (effectiveHeat * currentWeights.heat) +
-          (effectiveAge * currentWeights.age) +
-          (effectiveIncome * currentWeights.income) +
-          (effectiveCanopyDeficit * currentWeights.canopy)
-        ) / totalW;
+        let calculatedScore = 0;
+        if (isCustomWeights) {
+          const totalW = (heatWeight + ageWeight + incomeWeight) || 1;
+          calculatedScore = ((effectiveHeat * heatWeight) + (effectiveAge * ageWeight) + (effectiveIncome * incomeWeight)) / totalW;
+        } else {
+          const social = (effectiveAge + effectiveIncome) / 2;
+          const rule = scenarios[scenario];
+          calculatedScore = effectiveHeat * rule.heatWeight + social * rule.socialWeight;
+        }
 
         const socialAvg = (effectiveAge + effectiveIncome) / 2;
 
@@ -288,7 +253,6 @@ export default function Home() {
           effectiveHeat,
           effectiveAge,
           effectiveIncome,
-          effectiveCanopyDeficit,
           social: socialAvg,
           bivariateColor: getBivariateColor(effectiveHeat, socialAvg),
           score: calculatedScore,
@@ -306,7 +270,7 @@ export default function Home() {
           rankShift: shift,
         };
       });
-  }, [data, city, currentWeights, baselineRanks, applyTrees, applyShelter, applyRetrofit]);
+  }, [data, city, scenario, isCustomWeights, heatWeight, ageWeight, incomeWeight, baselineRanks, applyTrees, applyShelter, applyRetrofit]);
 
   const matches = useMemo(() => {
     const cleanQuery = query.trim().toLocaleLowerCase();
@@ -320,13 +284,14 @@ export default function Home() {
     heat: 1,
     age: 1,
     income: 1,
-    canopyDeficit: 1,
     profile: '',
     score: 0,
     rank: 1,
     baselineRank: 1,
     rankShift: 0,
   };
+
+  const rule = scenarios[scenario];
 
   const radarData = useMemo(() => {
     const cityItems = ranked;
@@ -335,13 +300,11 @@ export default function Home() {
     const avgHeat = cityItems.reduce((acc, curr) => acc + curr.heat, 0) / cityItems.length;
     const avgAge = cityItems.reduce((acc, curr) => acc + curr.age, 0) / cityItems.length;
     const avgIncome = cityItems.reduce((acc, curr) => acc + curr.income, 0) / cityItems.length;
-    const avgCanopy = cityItems.reduce((acc, curr) => acc + curr.canopyDeficit, 0) / cityItems.length;
 
     return [
       { metric: 'Thermal Heat', target: top.heat, average: Number(avgHeat.toFixed(2)), fullMark: 5 },
       { metric: 'Elderly (65+)', target: top.age, average: Number(avgAge.toFixed(2)), fullMark: 5 },
       { metric: 'Low Income', target: top.income, average: Number(avgIncome.toFixed(2)), fullMark: 5 },
-      { metric: 'Canopy Deficit', target: top.canopyDeficit, average: Number(avgCanopy.toFixed(2)), fullMark: 5 },
     ];
   }, [top, ranked]);
 
@@ -355,7 +318,6 @@ export default function Home() {
       heat: item.heat.toFixed(2),
       age: item.age.toFixed(2),
       income: item.income.toFixed(2),
-      canopy: item.canopyDeficit.toFixed(2),
       profile: item.profile,
       color: item.bivariateColor,
     }));
@@ -388,7 +350,7 @@ export default function Home() {
     }
     .popup-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; color: #0f172a; }
     .popup-badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-bottom: 4px; }
-    .popup-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; font-size: 10px; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
+    .popup-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; font-size: 10px; margin-top: 6px; border-top: 1px solid #e2e8f0; padding-top: 6px; }
     .metric-box { text-align: center; }
     .metric-val { font-weight: bold; font-size: 11px; display: block; }
   </style>
@@ -414,7 +376,7 @@ export default function Home() {
       });
 
       const popupContent = 
-        '<div style="min-width: 175px;">' +
+        '<div style="min-width: 165px;">' +
           '<div class="popup-title">' + pin.name + '</div>' +
           '<div class="popup-badge" style="background:' + pin.color + '25; color:' + pin.color + '; border: 1px solid ' + pin.color + '60;">Score: ' + pin.score + '</div>' +
           '<div style="font-size:10px; color:#475569; line-height:1.3;">' + pin.profile + '</div>' +
@@ -422,7 +384,6 @@ export default function Home() {
             '<div class="metric-box"><span style="color:#64748b;">Heat</span><span class="metric-val" style="color:#dc2626;">' + pin.heat + '</span></div>' +
             '<div class="metric-box"><span style="color:#64748b;">Age</span><span class="metric-val" style="color:#d97706;">' + pin.age + '</span></div>' +
             '<div class="metric-box"><span style="color:#64748b;">Income</span><span class="metric-val" style="color:#0284c7;">' + pin.income + '</span></div>' +
-            '<div class="metric-box"><span style="color:#64748b;">Canopy</span><span class="metric-val" style="color:#059669;">' + pin.canopy + '</span></div>' +
           '</div>' +
         '</div>';
 
@@ -437,7 +398,7 @@ export default function Home() {
 
   const totalSocialWeight = isCustomWeights 
     ? (ageWeight + incomeWeight) 
-    : (scenarios[scenario].ageWeight + scenarios[scenario].incomeWeight);
+    : Math.round(rule.socialWeight * 100);
 
   return (
     <main className="min-h-screen bg-[#fafaf9] text-slate-900 font-sans selection:bg-slate-200">
@@ -469,7 +430,6 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Brand Logo & Subtitle */}
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-xl bg-slate-950 p-2 shadow-xs border border-slate-800">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -566,10 +526,10 @@ export default function Home() {
               </span>
             </div>
 
-            {/* City Selector & Presets */}
+            {/* City Selector & Policy Framework Archetype Selector */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
               {/* City Switcher */}
-              <div className="lg:col-span-4">
+              <div className="lg:col-span-5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block mb-2">
                   1. Select Urban Context
                 </label>
@@ -592,8 +552,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Policy Rule Preset Selector (4 Presets) */}
-              <div className="lg:col-span-8">
+              {/* Policy Rule Preset Selector */}
+              <div className="lg:col-span-7">
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block">
                     2. Choose Policy Framework Archetype
@@ -610,19 +570,17 @@ export default function Home() {
                 </div>
 
                 {!isCustomWeights ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-stone-100 p-1.5 rounded-xl border border-stone-200">
-                    {(['heat', 'balanced', 'justice', 'green'] as Scenario[]).map((scKey) => {
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-stone-100 p-1.5 rounded-xl border border-stone-200">
+                    {(['heat', 'balanced', 'justice'] as Scenario[]).map((scKey) => {
                       const active = scenario === scKey;
                       const label = 
-                        scKey === 'heat' ? 'Heat-First' :
-                        scKey === 'balanced' ? 'Balanced' :
-                        scKey === 'justice' ? 'Justice-First' : 'Canopy-Deficit';
+                        scKey === 'heat' ? 'Technocratic (70/30)' :
+                        scKey === 'balanced' ? 'Compromise (50/50)' : 'Spatial Justice (30/70)';
                       
                       const icon = 
-                        scKey === 'heat' ? <Flame className="size-3 text-rose-500 inline mr-1" /> :
-                        scKey === 'balanced' ? <Scale className="size-3 text-amber-500 inline mr-1" /> :
-                        scKey === 'justice' ? <Users className="size-3 text-sky-500 inline mr-1" /> :
-                        <Trees className="size-3 text-emerald-500 inline mr-1" />;
+                        scKey === 'heat' ? <Flame className="size-3 text-rose-500 inline mr-1 shrink-0" /> :
+                        scKey === 'balanced' ? <Scale className="size-3 text-amber-500 inline mr-1 shrink-0" /> :
+                        <Users className="size-3 text-sky-500 inline mr-1 shrink-0" />;
 
                       return (
                         <button
@@ -660,32 +618,28 @@ export default function Home() {
             <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-bold text-rose-700 flex items-center gap-1">
-                  <Flame className="size-3.5" /> {currentWeights.heat}% Heat
+                  <Flame className="size-3.5" /> {isCustomWeights ? heatWeight : Math.round(rule.heatWeight * 100)}% Heat Weight
                 </span>
                 <span className="text-stone-300">|</span>
                 <span className="font-bold text-sky-800 flex items-center gap-1">
-                  <Users className="size-3.5" /> {totalSocialWeight}% Social
-                </span>
-                <span className="text-stone-300">|</span>
-                <span className="font-bold text-emerald-700 flex items-center gap-1">
-                  <Trees className="size-3.5" /> {currentWeights.canopy}% Canopy Deficit
+                  <Users className="size-3.5" /> {totalSocialWeight}% Social Weight
                 </span>
               </div>
               <div className="text-stone-600 text-[11px] font-medium flex items-center gap-1.5">
                 <Sparkles className="size-3.5 text-[#c2410c] shrink-0" />
                 <span>
-                  {scenario === 'green' || (isCustomWeights && canopyWeight > 35)
-                    ? 'Canopy-Deficit Prioritised: Severely treeless and paved sectors take priority.'
-                    : scenario === 'justice' || (isCustomWeights && totalSocialWeight > 50)
-                    ? 'Social Justice Prioritised: Vulnerable demographics move up despite lower surface heat.'
-                    : 'Physical Heat Prioritised: Dense urban surfaces take precedence over social inequality.'}
+                  {isCustomWeights
+                    ? (ageWeight + incomeWeight) > 50
+                      ? 'Radical Spatial Justice: Socioeconomic vulnerability and elderly isolation take precedence.'
+                      : 'Technocratic Determinism: Physical heat exposure overrides social inequalities.'
+                    : rule.note}
                 </span>
               </div>
             </div>
 
             {/* Custom Sliders */}
             {isCustomWeights && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5 mt-5 border-t border-stone-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 mt-5 border-t border-stone-200">
                 <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
                   <div className="flex justify-between text-xs mb-2 font-bold">
                     <span className="flex items-center gap-1.5 text-stone-800"><Flame className="size-4 text-rose-600" /> Heat Proxy</span>
@@ -728,21 +682,6 @@ export default function Home() {
                     value={incomeWeight}
                     onChange={(e) => setIncomeWeight(Number(e.target.value))}
                     className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-[#c2410c]"
-                  />
-                </div>
-
-                <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
-                  <div className="flex justify-between text-xs mb-2 font-bold">
-                    <span className="flex items-center gap-1.5 text-stone-800"><Trees className="size-4 text-emerald-600" /> Canopy Deficit</span>
-                    <span className="text-emerald-700">{canopyWeight}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={canopyWeight}
-                    onChange={(e) => setCanopyWeight(Number(e.target.value))}
-                    className="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
                   />
                 </div>
               </div>
@@ -819,7 +758,7 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Target Card with 4-Axis Radar Chart */}
+            {/* Target Card with 3-Axis Radar Chart */}
             <div className="flex flex-col gap-5">
               <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-md border border-slate-900">
                 <div className="flex items-start justify-between">
@@ -831,7 +770,7 @@ export default function Home() {
                   <Badge className="bg-amber-400/10 text-amber-300 border-amber-400/20 text-[10px]">Rank #1</Badge>
                 </div>
 
-                <div className="mt-3 h-[200px] w-full flex items-center justify-center">
+                <div className="mt-3 h-[190px] w-full flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <RadarChart cx="50%" cy="50%" outerRadius="68%" data={radarData}>
                       <PolarGrid stroke="#334155" />
@@ -843,16 +782,15 @@ export default function Home() {
                   </ResponsiveContainer>
                 </div>
 
-                <div className="grid grid-cols-4 gap-1.5 mt-2">
+                <div className="grid grid-cols-3 gap-2 mt-2">
                   {[
-                    ['Heat', top.heat, 'text-rose-400'],
-                    ['Elderly', top.age, 'text-amber-400'],
-                    ['Income', top.income, 'text-sky-400'],
-                    ['Canopy Deficit', top.canopyDeficit, 'text-emerald-400'],
+                    ['Heat Proxy', top.heat, 'text-rose-400'],
+                    ['Elderly (65+)', top.age, 'text-amber-400'],
+                    ['Low Income', top.income, 'text-sky-400'],
                   ].map(([label, value, colorClass]) => (
                     <div key={String(label)} className="rounded-lg bg-slate-900 p-2 border border-slate-800 text-center">
-                      <p className="text-[9px] text-slate-400 truncate">{label}</p>
-                      <p className={`font-mono text-xs font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{label}</p>
+                      <p className={`font-mono text-sm font-bold ${colorClass}`}>{Number(value).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -878,11 +816,11 @@ export default function Home() {
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <Trees className={`size-4 ${applyTrees ? 'text-emerald-600' : 'text-stone-400'}`} />
-                      <span>+15% Urban Tree Canopy</span>
+                      <Flame className={`size-4 ${applyTrees ? 'text-emerald-600' : 'text-stone-400'}`} />
+                      <span>+15% Urban Tree Canopy &amp; Shade</span>
                     </span>
                     <Badge variant="outline" className={`text-[10px] ${applyTrees ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'text-stone-500'}`}>
-                      -1.0 Heat / -1.5 Deficit
+                      -1.0 Heat
                     </Badge>
                   </button>
 
@@ -897,7 +835,7 @@ export default function Home() {
                   >
                     <span className="flex items-center gap-2">
                       <Users className={`size-4 ${applyShelter ? 'text-amber-600' : 'text-stone-400'}`} />
-                      <span>Cooling Shelter & Water Network</span>
+                      <span>Cooling Shelter &amp; Water Network</span>
                     </span>
                     <Badge variant="outline" className={`text-[10px] ${applyShelter ? 'bg-amber-100 border-amber-300 text-amber-800' : 'text-stone-500'}`}>
                       -1.2 Age Risk
@@ -966,12 +904,10 @@ export default function Home() {
                 </div>
 
                 <div className="relative flex items-center justify-center py-1">
-                  {/* Y-Axis Label */}
                   <div className="absolute -left-3.5 text-[9px] font-medium text-slate-400 -rotate-90 origin-center whitespace-nowrap">
                     Social Risk →
                   </div>
 
-                  {/* 3x3 Grid */}
                   <div className="grid grid-cols-3 gap-1 bg-slate-900/60 p-1 rounded-md border border-slate-800">
                     {BIVARIATE_MATRIX.map((row, rIdx) =>
                       row.map((color, cIdx) => {
@@ -999,12 +935,10 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* X-Axis Label */}
                 <div className="text-center text-[9px] font-medium text-slate-400 mt-1">
                   Surface Heat (LST) →
                 </div>
 
-                {/* Legend Footnotes */}
                 <div className="mt-2.5 pt-2 border-t border-slate-800/90 flex items-center justify-between text-[9px] text-slate-400">
                   <div className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-xs bg-[#2a9d8f]" />
@@ -1090,7 +1024,7 @@ export default function Home() {
             </h3>
             <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 text-center my-3">
               <p className="font-mono text-sm md:text-base font-bold text-slate-900">
-                Priority Score = (w_heat * Heat) + (w_age * Age) + (w_income * Low Income) + (w_canopy * Canopy Deficit)
+                Urban Heat Priority Score = (w_heat * Heat Proxy) + [w_social * ((Age 65+ + Income Vulnerability) / 2)]
               </p>
             </div>
             <p className="text-xs text-stone-600 leading-relaxed">
@@ -1104,19 +1038,22 @@ export default function Home() {
               <FileSpreadsheet className="size-5 text-[#c2410c]" /> 1. Data Operationalisation and Indicator Rationale
             </h3>
             <p className="text-xs md:text-sm text-stone-600 mb-6 leading-relaxed">
-              Algorithmic scoring models are never neutral; the choice of indicators defines what the municipal bureaucracy sees and what it ignores. Our dataset operationalises four foundational dimensions:
+              Algorithmic scoring models are never neutral; the choice of indicators defines what the municipal bureaucracy sees and what it ignores. Our dataset operationalises three foundational dimensions:
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
                 <div className="flex items-center gap-2.5 mb-2.5">
                   <div className="p-2 rounded-lg bg-rose-50 text-rose-600">
                     <Flame className="size-4" />
                   </div>
-                  <h4 className="font-bold text-sm text-slate-900">Thermal Heat Proxy</h4>
+                  <h4 className="font-bold text-sm text-slate-900">Thermal Risk Proxy (1-5)</h4>
                 </div>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Composite indicator based on Land Surface Temperature (LST) anomalies and impervious surface ratio.
+                  <strong>Operational Definition:</strong> Composite indicator based on Land Surface Temperature (LST) anomalies and high soil imperviousness.
+                </p>
+                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
+                  <strong>Why it matters:</strong> Densely built urban fabrics create severe Urban Heat Islands (UHI), preventing nocturnal cooling.
                 </p>
               </div>
 
@@ -1128,7 +1065,10 @@ export default function Home() {
                   <h4 className="font-bold text-sm text-slate-900">Age Vulnerability (65+)</h4>
                 </div>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Proportion of residents aged 65 and above, weighted by single-person household isolation.
+                  <strong>Operational Definition:</strong> Proportion of residents aged 65 and above, weighted by single-person household density from municipal registries.
+                </p>
+                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
+                  <strong>Why it matters:</strong> Physiological thermoregulation decline makes elderly residents the primary demographic for heat-wave mortality.
                 </p>
               </div>
 
@@ -1140,19 +1080,10 @@ export default function Home() {
                   <h4 className="font-bold text-sm text-slate-900">Income Vulnerability</h4>
                 </div>
                 <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Inverse median disposable household income and low-income subsidy dependency rates.
+                  <strong>Operational Definition:</strong> Standardised inverse of median household disposable income and low-income subsidy dependency rate.
                 </p>
-              </div>
-
-              <div className="p-5 rounded-xl border border-stone-200 bg-white shadow-xs">
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-                    <Trees className="size-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-slate-900">Canopy Deficit</h4>
-                </div>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  <strong>Operational Definition:</strong> Relative deficit of urban tree canopy and public green shade per capita across neighbourhood fabrics.
+                <p className="mt-2.5 text-[11px] text-stone-500 border-t border-stone-100 pt-2 italic">
+                  <strong>Why it matters:</strong> Low-income households face severe thermal energy poverty and reside in poorly insulated housing stock.
                 </p>
               </div>
             </div>
