@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Sliders,
   Sparkles,
+  Trophy,
   TrendingDown,
   TrendingUp,
   Users,
@@ -231,7 +232,7 @@ function profileTone(profile: string) {
 
 export default function Home() {
   const [data] = useState<Neighbourhood[]>(DATASETS);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'methodology'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'methodology' | 'sandbox'>('dashboard');
   const [city, setCity] = useState<City>('Brussels');
   const [scenario, setScenario] = useState<Scenario>('heat');
   const [query, setQuery] = useState('');
@@ -246,6 +247,102 @@ export default function Home() {
   const [applyTrees, setApplyTrees] = useState<boolean>(false);
   const [applyShelter, setApplyShelter] = useState<boolean>(false);
   const [applyRetrofit, setApplyRetrofit] = useState<boolean>(false);
+
+  // Mayor Game Sandbox State
+  const [sandboxBudget, setSandboxBudget] = useState(100);
+  const [sandboxJusticeIndex, setSandboxJusticeIndex] = useState(50);
+  const [sandboxGameStatus, setSandboxGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
+  const [selectedSandboxNeighborhood, setSelectedSandboxNeighborhood] = useState('molenbeek');
+  const [sandboxNeighborhoods, setSandboxNeighborhoods] = useState({
+    molenbeek: { name: "Molenbeek", heatRisk: 85, greenCover: 10, vulnerability: 90, gentrificationRisk: 20 },
+    ixelles: { name: "Ixelles", heatRisk: 50, greenCover: 40, vulnerability: 30, gentrificationRisk: 60 }
+  });
+  const [sandboxAlerts, setSandboxAlerts] = useState<string[]>([
+    "System operational. Select a district and deploy urban policies, Mayor."
+  ]);
+
+  const activeSandboxN = sandboxNeighborhoods[selectedSandboxNeighborhood as keyof typeof sandboxNeighborhoods];
+
+  const triggerSandboxAlert = (msg: string) => {
+    setSandboxAlerts(prev => [msg, ...prev]);
+  };
+
+  const checkSandboxGameEnd = (newJustice: number, newBudget: number) => {
+    if (newJustice >= 73) {
+      setSandboxGameStatus('won');
+      triggerSandboxAlert("🎉 Victory! You successfully balanced climate resilience and social justice, Mayor!");
+    } else if (newBudget <= 0 || newJustice < 30) {
+      setSandboxGameStatus('lost');
+      triggerSandboxAlert("💀 Game Over! Budget depleted or social unrest boiled over. You lost the election!");
+    }
+  };
+
+  const applySandboxPolicy = (policyType: string) => {
+    if (sandboxGameStatus !== 'playing') return;
+
+    let currentBudget = sandboxBudget;
+    let currentJustice = sandboxJusticeIndex;
+    let updatedNeighborhoods = { ...sandboxNeighborhoods };
+    let targetN = { ...updatedNeighborhoods[selectedSandboxNeighborhood as keyof typeof updatedNeighborhoods] };
+    let alertMessage = "";
+
+    if (policyType === "greenCanopy") {
+      if (currentBudget < 30) {
+        triggerSandboxAlert("❌ Error: Insufficient municipal budget!");
+        return;
+      }
+      currentBudget -= 30;
+      targetN.greenCover = Math.min(100, targetN.greenCover + 25);
+      targetN.heatRisk = Math.max(0, targetN.heatRisk - 20);
+
+      if (targetN.vulnerability > 70) {
+        targetN.gentrificationRisk = Math.min(100, targetN.gentrificationRisk + 40);
+        alertMessage = `⚠️ Green Gentrification Risk in ${targetN.name}! Property values spiked; vulnerable residents face displacement.`;
+        currentJustice = Math.max(0, currentJustice - 15);
+      } else {
+        alertMessage = `🌿 Green canopy successfully expanded in ${targetN.name}.`;
+        currentJustice = Math.min(100, currentJustice + 12);
+      }
+    } 
+    else if (policyType === "tenantProtection") {
+      if (currentBudget < 20) {
+        triggerSandboxAlert("❌ Error: Insufficient municipal budget!");
+        return;
+      }
+      currentBudget -= 20;
+      targetN.gentrificationRisk = Math.max(0, targetN.gentrificationRisk - 30);
+      currentJustice = Math.min(100, currentJustice + 22);
+      alertMessage = `🛡️ Tenant rent safeguards and social protections secured in ${targetN.name}.`;
+    } 
+    else if (policyType === "coolingHubs") {
+      if (currentBudget < 15) {
+        triggerSandboxAlert("❌ Error: Insufficient municipal budget!");
+        return;
+      }
+      currentBudget -= 15;
+      targetN.heatRisk = Math.max(0, targetN.heatRisk - 35);
+      alertMessage = `❄️ Emergency cooling hubs deployed in ${targetN.name} for heatwave mitigation.`;
+    }
+
+    updatedNeighborhoods[selectedSandboxNeighborhood as keyof typeof updatedNeighborhoods] = targetN;
+    setSandboxBudget(currentBudget);
+    setSandboxJusticeIndex(currentJustice);
+    setSandboxNeighborhoods(updatedNeighborhoods);
+    if (alertMessage) triggerSandboxAlert(alertMessage);
+
+    checkSandboxGameEnd(currentJustice, currentBudget);
+  };
+
+  const resetSandboxGame = () => {
+    setSandboxBudget(100);
+    setSandboxJusticeIndex(50);
+    setSandboxGameStatus('playing');
+    setSandboxNeighborhoods({
+      molenbeek: { name: "Molenbeek", heatRisk: 85, greenCover: 10, vulnerability: 90, gentrificationRisk: 20 },
+      ixelles: { name: "Ixelles", heatRisk: 50, greenCover: 40, vulnerability: 30, gentrificationRisk: 60 }
+    });
+    setSandboxAlerts(["System reset. New term started, Mayor."]);
+  };
 
   const baselineRanks = useMemo(() => {
     const list = data
@@ -468,6 +565,17 @@ export default function Home() {
             >
               Methodology & Framework
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('sandbox')}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 ${
+                activeTab === 'sandbox'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200'
+              }`}
+            >
+              <Trophy className="size-3.5" /> Play as Mayor
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -515,6 +623,18 @@ export default function Home() {
               <p className="mt-3 text-sm leading-relaxed text-stone-600 md:text-base">
                 AI does not decide which neighbourhood gets cooled. <strong>Human policymakers choose what data to value</strong>, while the algorithm merely computes the spatial consequences. This interactive sandbox audits how shifting political priorities in Brussels, Amsterdam, Istanbul, and Izmir re-allocate climate resilience resources.
               </p>
+
+              {/* Flashy Gradient Play as Mayor Button */}
+              <div className="mt-5">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('sandbox')}
+                  className="inline-flex items-center gap-2 px-6 py-3 font-extrabold text-white rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 shadow-xl hover:shadow-purple-500/50 hover:scale-105 transition-all duration-300 border border-white/20 cursor-pointer"
+                >
+                  <span>👑</span>
+                  <span>Play as Mayor: Climate Sandbox</span>
+                </button>
+              </div>
             </div>
 
             <div className="relative">
@@ -1041,6 +1161,164 @@ export default function Home() {
               </div>
             </div>
           </section>
+        </div>
+      ) : activeTab === 'sandbox' ? (
+        /* PLAY AS MAYOR - INTERACTIVE POLICY SANDBOX GAME */
+        <div className="mx-auto max-w-4xl px-5 py-8 md:px-8 md:py-10">
+          <div className="max-w-4xl mx-auto p-6 md:p-8 bg-slate-900 text-slate-100 rounded-2xl shadow-2xl mt-4 border border-slate-800 relative">
+            
+            {/* Game Over / Win Overlay Modal */}
+            {sandboxGameStatus !== 'playing' && (
+              <div className="absolute inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center p-6 rounded-2xl text-center backdrop-blur-sm">
+                {sandboxGameStatus === 'won' ? (
+                  <>
+                    <div className="text-5xl mb-4">👑🏆</div>
+                    <h2 className="text-3xl font-black text-emerald-400 mb-2">Victory, Mayor!</h2>
+                    <p className="text-slate-300 max-w-md mb-6 text-sm">
+                      You successfully pushed the Justice Index above the 73% strategic threshold! Brussels has been transformed into a green, resilient, and socially just city.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-5xl mb-4">💀📉</div>
+                    <h2 className="text-3xl font-black text-rose-500 mb-2">Game Over!</h2>
+                    <p className="text-slate-300 max-w-md mb-6 text-sm">
+                      Your municipal budget was depleted or social trust collapsed. Urban unrest boiled over, and you lost the election!
+                    </p>
+                  </>
+                )}
+                <button 
+                  onClick={resetSandboxGame}
+                  className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-indigo-600 font-bold text-white rounded-xl shadow-lg hover:scale-105 transition-transform cursor-pointer"
+                >
+                  Play Again
+                </button>
+              </div>
+            )}
+
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-6 gap-4">
+              <div>
+                <span className="text-xs uppercase tracking-wider text-emerald-400 font-semibold bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-800/50">
+                  Interactive Policy Sandbox
+                </span>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mt-2 text-white">
+                  Brussels Urban Climate & Justice Simulator
+                </h1>
+                <p className="text-slate-400 text-sm mt-1">
+                  Reach 73% Justice Index to win. Balance resilience and avoid green gentrification.
+                </p>
+              </div>
+              <div className="bg-slate-800/80 px-4 py-3 rounded-xl border border-slate-700 flex items-center gap-4">
+                <div>
+                  <div className="text-xs text-slate-400 uppercase font-medium">Budget</div>
+                  <div className="text-xl font-bold text-emerald-400">{sandboxBudget} pts</div>
+                </div>
+                <div className="h-8 w-px bg-slate-700"></div>
+                <div>
+                  <div className="text-xs text-slate-400 uppercase font-medium">Justice Index</div>
+                  <div className="text-xl font-bold text-indigo-400">{sandboxJusticeIndex}%</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Neighborhood Selector */}
+            <div className="mb-6">
+              <label className="block text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">
+                Select Target District
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(sandboxNeighborhoods).map(([id, data]) => (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedSandboxNeighborhood(id)}
+                    className={`p-4 rounded-xl text-left transition-all border cursor-pointer ${
+                      selectedSandboxNeighborhood === id 
+                        ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-lg' 
+                        : 'bg-slate-800/50 border-slate-700/60 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="font-bold text-lg">{data.name}</div>
+                    <div className="text-xs text-slate-400 mt-1 flex gap-4">
+                      <span>Heat Risk: <strong className="text-amber-400">{data.heatRisk}</strong></span>
+                      <span>Vulnerability: <strong className="text-rose-400">{data.vulnerability}</strong></span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* District Stats Overview */}
+            <div className="grid grid-cols-3 gap-4 mb-6 bg-slate-800/40 p-5 rounded-xl border border-slate-800">
+              <div>
+                <div className="text-xs text-slate-400">Heat Stress Risk</div>
+                <div className="text-2xl font-black text-amber-400 mt-1">{activeSandboxN.heatRisk} <span className="text-xs font-normal text-slate-400">/ 100</span></div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Green Canopy</div>
+                <div className="text-2xl font-black text-emerald-400 mt-1">{activeSandboxN.greenCover}%</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-400">Gentrification Risk</div>
+                <div className="text-2xl font-black text-rose-400 mt-1">{activeSandboxN.gentrificationRisk}%</div>
+              </div>
+            </div>
+
+            {/* Policy Action Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <button 
+                onClick={() => applySandboxPolicy('greenCanopy')} 
+                className="p-4 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/40 border border-emerald-800/60 text-left transition-all group cursor-pointer"
+              >
+                <div className="text-emerald-400 font-bold mb-1 group-hover:translate-x-1 transition-transform">🌿 Expand Canopy</div>
+                <p className="text-xs text-slate-400 mb-3">Lowers urban heat islands via massive green infrastructure.</p>
+                <span className="text-xs font-semibold bg-emerald-900/60 text-emerald-300 px-2.5 py-1 rounded-md">Cost: 30 pts</span>
+              </button>
+
+              <button 
+                onClick={() => applySandboxPolicy('tenantProtection')} 
+                className="p-4 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-800/60 text-left transition-all group cursor-pointer"
+              >
+                <div className="text-indigo-400 font-bold mb-1 group-hover:translate-x-1 transition-transform">🛡️ Rent Safeguards</div>
+                <p className="text-xs text-slate-400 mb-3">Implements anti-displacement and housing price caps.</p>
+                <span className="text-xs font-semibold bg-indigo-900/60 text-indigo-300 px-2.5 py-1 rounded-md">Cost: 20 pts</span>
+              </button>
+
+              <button 
+                onClick={() => applySandboxPolicy('coolingHubs')} 
+                className="p-4 rounded-xl bg-sky-950/40 hover:bg-sky-900/40 border border-sky-800/60 text-left transition-all group cursor-pointer"
+              >
+                <div className="text-sky-400 font-bold mb-1 group-hover:translate-x-1 transition-transform">❄️ Cooling Hubs</div>
+                <p className="text-xs text-slate-400 mb-3">Rapid pop-up emergency relief centers during heatwaves.</p>
+                <span className="text-xs font-semibold bg-sky-900/60 text-sky-300 px-2.5 py-1 rounded-md">Cost: 15 pts</span>
+              </button>
+            </div>
+
+            {/* Console / Alert Feed */}
+            <div>
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2">
+                Policy Impact & System Feed
+              </div>
+              <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-xl max-h-48 overflow-y-auto space-y-2 font-mono text-xs">
+                {sandboxAlerts.map((msg, index) => (
+                  <div 
+                    key={index} 
+                    className={`p-3 rounded-lg border ${
+                      msg.includes('⚠️') 
+                        ? 'bg-amber-950/50 border-amber-800/60 text-amber-200' 
+                        : msg.includes('❌') || msg.includes('💀')
+                        ? 'bg-rose-950/50 border-rose-800/60 text-rose-200'
+                        : msg.includes('🎉')
+                        ? 'bg-emerald-950/50 border-emerald-800/60 text-emerald-200'
+                        : 'bg-slate-900 border-slate-800 text-slate-300'
+                    }`}
+                  >
+                    {msg}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="mx-auto max-w-[1240px] px-5 py-10 md:px-8">
