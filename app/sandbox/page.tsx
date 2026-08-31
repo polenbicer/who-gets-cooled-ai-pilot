@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 export default function SandboxPage() {
     const [budget, setBudget] = useState(100);
     const [justiceIndex, setJusticeIndex] = useState(50);
+    const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
     const [selectedNeighborhood, setSelectedNeighborhood] = useState('molenbeek');
     const [neighborhoods, setNeighborhoods] = useState({
         molenbeek: { name: "Molenbeek", heatRisk: 85, greenCover: 10, vulnerability: 90, gentrificationRisk: 20 },
@@ -20,7 +21,20 @@ export default function SandboxPage() {
         setAlerts(prev => [msg, ...prev]);
     };
 
+    const checkGameEnd = (newJustice: number, newBudget: number) => {
+        // Trick number for winning: 73% Justice Index!
+        if (newJustice >= 73) {
+            setGameStatus('won');
+            triggerAlert("🎉 Victory! You successfully balanced climate resilience and social justice, Mayor!");
+        } else if (newBudget <= 0 || newJustice < 30) {
+            setGameStatus('lost');
+            triggerAlert("💀 Game Over! Budget depleted or social unrest boiled over. You lost the election!");
+        }
+    };
+
     const applyPolicy = (policyType: string) => {
+        if (gameStatus !== 'playing') return;
+
         let currentBudget = budget;
         let currentJustice = justiceIndex;
         let updatedNeighborhoods = { ...neighborhoods };
@@ -42,7 +56,7 @@ export default function SandboxPage() {
                 currentJustice = Math.max(0, currentJustice - 15);
             } else {
                 alertMessage = `🌿 Green canopy successfully expanded in ${targetN.name}.`;
-                currentJustice = Math.min(100, currentJustice + 10);
+                currentJustice = Math.min(100, currentJustice + 12);
             }
         } 
         else if (policyType === "tenantProtection") {
@@ -52,7 +66,7 @@ export default function SandboxPage() {
             }
             currentBudget -= 20;
             targetN.gentrificationRisk = Math.max(0, targetN.gentrificationRisk - 30);
-            currentJustice = Math.min(100, currentJustice + 25);
+            currentJustice = Math.min(100, currentJustice + 22);
             alertMessage = `🛡️ Tenant rent safeguards and social protections secured in ${targetN.name}.`;
         } 
         else if (policyType === "coolingHubs") {
@@ -70,10 +84,53 @@ export default function SandboxPage() {
         setJusticeIndex(currentJustice);
         setNeighborhoods(updatedNeighborhoods);
         if (alertMessage) triggerAlert(alertMessage);
+
+        checkGameEnd(currentJustice, currentBudget);
+    };
+
+    const resetGame = () => {
+        setBudget(100);
+        setJusticeIndex(50);
+        setGameStatus('playing');
+        setNeighborhoods({
+            molenbeek: { name: "Molenbeek", heatRisk: 85, greenCover: 10, vulnerability: 90, gentrificationRisk: 20 },
+            ixelles: { name: "Ixelles", heatRisk: 50, greenCover: 40, vulnerability: 30, gentrificationRisk: 60 }
+        });
+        setAlerts(["System reset. New term started, Mayor."]);
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6 md:p-8 bg-slate-900 text-slate-100 rounded-2xl shadow-2xl mt-8 border border-slate-800">
+        <div className="max-w-4xl mx-auto p-6 md:p-8 bg-slate-900 text-slate-100 rounded-2xl shadow-2xl mt-8 border border-slate-800 relative">
+            
+            {/* Game Over / Win Overlay Modal */}
+            {gameStatus !== 'playing' && (
+                <div className="absolute inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center p-6 rounded-2xl text-center backdrop-blur-sm">
+                    {gameStatus === 'won' ? (
+                        <>
+                            <div className="text-5xl mb-4">👑🏆</div>
+                            <h2 className="text-3xl font-black text-emerald-400 mb-2">Tebrikler, Kazandınız!</h2>
+                            <p className="text-slate-300 max-w-md mb-6 text-sm">
+                                Adalet endeksini %73'lük stratejik eşiğin üzerine çıkardın! Brüksel'i hem yeşil hem adil bir kente dönüştürdün.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <div className="text-5xl mb-4">💀📉</div>
+                            <h2 className="text-3xl font-black text-rose-500 mb-2">Oyunu Kaybettiniz!</h2>
+                            <p className="text-slate-300 max-w-md mb-6 text-sm">
+                                Bütçen tükendi ya da halkın adalet güveni yerle bir oldu. Şehirde sosyal patlama yaşandı, belediye seçimlerini kaybettin!
+                            </p>
+                        </>
+                    )}
+                    <button 
+                        onClick={resetGame}
+                        className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-indigo-600 font-bold text-white rounded-xl shadow-lg hover:scale-105 transition-transform"
+                    >
+                        Yeniden Başla (Play Again)
+                    </button>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-6 gap-4">
                 <div>
@@ -84,7 +141,7 @@ export default function SandboxPage() {
                         Brussels Urban Climate & Justice Simulator
                     </h1>
                     <p className="text-slate-400 text-sm mt-1">
-                        Balance environmental resilience with social equity. Avoid green gentrification.
+                        Reach 73% Justice Index to win. Balance resilience and avoid gentrification.
                     </p>
                 </div>
                 <div className="bg-slate-800/80 px-4 py-3 rounded-xl border border-slate-700 flex items-center gap-4">
@@ -184,8 +241,10 @@ export default function SandboxPage() {
                             className={`p-3 rounded-lg border ${
                                 msg.includes('⚠️') 
                                     ? 'bg-amber-950/50 border-amber-800/60 text-amber-200' 
-                                    : msg.includes('❌') 
+                                    : msg.includes('❌') || msg.includes('💀')
                                     ? 'bg-rose-950/50 border-rose-800/60 text-rose-200'
+                                    : msg.includes('🎉')
+                                    ? 'bg-emerald-950/50 border-emerald-800/60 text-emerald-200'
                                     : 'bg-slate-900 border-slate-800 text-slate-300'
                             }`}
                         >
