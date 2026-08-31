@@ -368,7 +368,7 @@ function getLegacy(stats: Stats) {
     { key: 'CLIMATE CHAMPION', score: (100 - stats.heat) * 0.7 + stats.green * 0.3 },
     { key: 'JUSTICE MAYOR', score: stats.justice * 0.8 + stats.trust * 0.2 },
     { key: 'PUBLIC HEALTH MAYOR', score: stats.health * 0.8 + (100 - stats.deaths * 4) * 0.2 },
-    { key: 'PEOPLE\\'S MAYOR', score: stats.approval * 0.55 + stats.trust * 0.45 },
+    { key: "PEOPLE'S MAYOR", score: stats.approval * 0.55 + stats.trust * 0.45 },
     { key: 'POLITICAL SURVIVOR', score: stats.approval * 0.45 + stats.council * 0.55 },
     { key: 'BALANCED MAYOR', score: (
       (100 - stats.heat) +
