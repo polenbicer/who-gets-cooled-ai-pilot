@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   ArrowRight,
   BarChart3,
@@ -434,7 +435,7 @@ function StatBar({
 }: {
   label: string;
   value: number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   inverse?: boolean;
 }) {
   const shown = inverse ? Math.max(0, 100 - value) : value;
