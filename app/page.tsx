@@ -1043,7 +1043,6 @@ export default function Home() {
           </section>
         </div>
       ) : (
-        {/* METHODOLOGY & ANALYTICAL FRAMEWORK TAB */}
         <div className="mx-auto max-w-[1240px] px-5 py-10 md:px-8">
           <div className="mb-10 text-center md:text-left">
             <Badge variant="outline" className="mb-3 border-stone-300 bg-stone-100 text-stone-700 text-xs font-medium">
