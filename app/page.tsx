@@ -1,9 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import {
-  ArrowRight,
   BrainCircuit,
   Building2,
   Compass,
@@ -24,6 +22,7 @@ import {
   TrendingUp,
   Users,
   Wrench,
+  ArrowRight,
 } from 'lucide-react';
 import {
   Bar,
@@ -238,13 +237,11 @@ export default function Home() {
   const [scenario, setScenario] = useState<Scenario>('heat');
   const [query, setQuery] = useState('');
 
-  // Policy Simulator
   const [heatWeight, setHeatWeight] = useState<number>(34);
   const [ageWeight, setAgeWeight] = useState<number>(33);
   const [incomeWeight, setIncomeWeight] = useState<number>(33);
   const [isCustomWeights, setIsCustomWeights] = useState<boolean>(false);
 
-  // What-If Interventions
   const [applyTrees, setApplyTrees] = useState<boolean>(false);
   const [applyShelter, setApplyShelter] = useState<boolean>(false);
   const [applyRetrofit, setApplyRetrofit] = useState<boolean>(false);
@@ -470,12 +467,12 @@ export default function Home() {
             >
               Methodology & Framework
             </button>
-            <Link
+            <a
               href="/sandbox"
-              className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-[#c2410c] text-white hover:bg-[#a9370a] shadow-sm transition-all flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-bold rounded-md bg-[#c2410c] text-white hover:bg-[#a9370a] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <Trophy className="size-3.5" /> Play as Mayor
-            </Link>
+            </a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -511,7 +508,6 @@ export default function Home() {
 
       {activeTab === 'dashboard' ? (
         <div className="mx-auto max-w-[1400px] px-5 py-8 md:px-8 md:py-10">
-          {/* Hero Section */}
           <section className="mb-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px] xl:items-end">
             <div className="max-w-3xl">
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#c2410c]">
@@ -525,13 +521,13 @@ export default function Home() {
               </p>
 
               <div className="mt-5">
-                <Link
+                <a
                   href="/sandbox"
                   className="inline-flex items-center gap-2 px-6 py-3 font-bold text-white rounded-xl bg-[#c2410c] hover:bg-[#a9370a] shadow-md transition-all text-xs cursor-pointer"
                 >
                   <span>👑</span>
                   <span>Play as Mayor: Climate Sandbox</span>
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -584,7 +580,6 @@ export default function Home() {
               </span>
             </div>
 
-            {/* City Selector & Policy Framework Archetype Selector */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
               <div className="lg:col-span-5">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block mb-2">
@@ -670,7 +665,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Dynamic Political Shift Insight Banner */}
             <div className="mt-4 rounded-xl bg-stone-50 border border-stone-200 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-bold text-rose-700 flex items-center gap-1">
@@ -693,7 +687,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Custom Sliders */}
             {isCustomWeights && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 mt-5 border-t border-stone-200">
                 <div className="bg-stone-50 p-3.5 rounded-xl border border-stone-200">
@@ -814,7 +807,6 @@ export default function Home() {
               </CardContent>
             </Card>
 
-            {/* Target Card with 3-Axis Radar Chart */}
             <div className="flex flex-col gap-5">
               <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-md border border-slate-900">
                 <div className="flex items-start justify-between">
@@ -852,7 +844,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Interventions Simulator */}
               <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
