@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
@@ -921,9 +920,9 @@ export default function MayorGamePage() {
               </div>
             </div>
             <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-800">
-              <Link href="/" className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 font-semibold">
+              <a href="/" className="text-xs text-slate-400 hover:text-white flex items-center gap-1.5 font-semibold cursor-pointer">
                 <ArrowLeft className="size-4" /> Exit to Dashboard
-              </Link>
+              </a>
               <button
                 onClick={() => setShowIntroModal(false)}
                 className="px-6 py-3 rounded-xl bg-[#c2410c] hover:bg-[#a9370a] text-white font-black text-xs tracking-wider uppercase transition-all shadow-lg cursor-pointer"
@@ -976,26 +975,26 @@ export default function MayorGamePage() {
               >
                 Play Again
               </button>
-              <Link
+              <a
                 href="/"
-                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-all"
+                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
               >
                 Back to Dashboard
-              </Link>
+              </a>
             </div>
           </div>
         </div>
       )}
 
-      {/* TOP STATS BAR WITH BACK TO DASHBOARD BUTTON */}
+      {/* TOP STATS BAR WITH RELIABLE DIRECT A-HREF BACK TO DASHBOARD BUTTON */}
       <header className="h-16 border-b border-slate-800/90 bg-[#090e15] px-4 md:px-6 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 min-w-max">
-          <Link
+          <a
             href="/"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all border border-slate-700"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all border border-slate-700 cursor-pointer"
           >
             <ArrowLeft className="size-3.5" /> Back to Dashboard
-          </Link>
+          </a>
           <div className="h-6 w-px bg-slate-800" />
           <div>
             <div className="text-[11px] font-black uppercase tracking-wider text-slate-200">
