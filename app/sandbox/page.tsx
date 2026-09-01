@@ -2,10 +2,70 @@
 
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ArrowRight, BarChart3, BrainCircuit, Check, ChevronRight, Coins, Gavel, HeartPulse, Leaf, Megaphone, Scale, ShieldAlert, Sparkles, Trophy, Users, X, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  BarChart3,
+  BrainCircuit,
+  Check,
+  ChevronRight,
+  Coins,
+  Gavel,
+  HeartPulse,
+  Leaf,
+  Megaphone,
+  Scale,
+  ShieldAlert,
+  Sparkles,
+  Trophy,
+  Users,
+  X,
+  Zap,
+} from 'lucide-react';
 
 type CityKey = 'Brussels' | 'Amsterdam' | 'Istanbul' | 'Izmir';
-type District = { name:string; heat:number; poverty:number; elderly:number; housing:number; green:number; x:number; y:number };
+
+type District = {
+  name: string;
+  heat: number;
+  poverty: number;
+  elderly: number;
+  housing: number;
+  green: number;
+  x: number;
+  y: number;
+};
+
+type Stats = {
+  heat: number;
+  justice: number;
+  approval: number;
+  trust: number;
+  council: number;
+  budget: number;
+  green: number;
+  health: number;
+  deaths: number;
+};
+
+type Effect = Partial<Stats> & { months?: number };
+
+type Decision = {
+  id: string;
+  title: string;
+  icon: string;
+  description: string;
+  cost: number;
+  effect: Effect;
+  tag: string;
+};
+
+type EventCard = {
+  title: string;
+  kicker: string;
+  body: string;
+  choices: Decision[];
+};
+
 const CITIES: Record<CityKey, {
   emoji: string;
   subtitle: string;
@@ -66,96 +126,778 @@ const CITIES: Record<CityKey, {
   },
 };
 
-
-type Screen = 'intro' | 'city' | 'game' | 'campaign' | 'end';
-type Stats = { heat:number; justice:number; approval:number; trust:number; council:number; budget:number; green:number; health:number; deaths:number; media:number; developers:number; activists:number };
-type Effect = Partial<Stats>;
-type Choice = { id:string; title:string; icon:string; description:string; cost:number; effect:Effect; tag:string };
-type EventCard = { id:string; title:string; kicker:string; body:string; choices:Choice[] };
-type CampaignChoice = { id:string; title:string; description:string; cost:number; votes:number; effect:Effect };
-
-const BASE_STATS: Stats = { heat:68, justice:50, approval:60, trust:60, council:55, budget:100, green:35, health:55, deaths:0, media:50, developers:50, activists:50 };
-const clamp=(n:number,min=0,max=100)=>Math.max(min,Math.min(max,Math.round(n)));
-const money=(n:number)=>`${n<0?'-':''}€${Math.abs(n).toFixed(0)}M`;
+const BASE_STATS: Stats = {
+  heat: 68,
+  justice: 50,
+  approval: 60,
+  trust: 60,
+  council: 55,
+  budget: 100,
+  green: 35,
+  health: 55,
+  deaths: 0,
+};
 
 const EVENTS: EventCard[] = [
-{id:'heat',title:'The Heatwave Is Coming',kicker:'TURN 1 · 38°C FORECAST',body:'Meteorologists forecast three dangerous days. Hospitals ask for immediate support while your infrastructure team warns that long-term projects are already stretched.',choices:[
-{id:'shelters',title:'Open cooling shelters',icon:'💧',description:'Open libraries, sports halls and schools as free cooling centres.',cost:12,effect:{heat:-5,health:8,approval:7,justice:5,trust:4,deaths:-3,activists:3},tag:'FAST RELIEF'},
-{id:'ac',title:'Emergency AC subsidy',icon:'❄️',description:'Subsidise cooling bills for households that apply.',cost:18,effect:{heat:-7,approval:9,health:6,justice:-2,trust:2,deaths:-4},tag:'POPULAR'},
-{id:'shade',title:'Accelerate shade programme',icon:'🌳',description:'Redirect crews to trees, shade sails and reflective streets.',cost:25,effect:{heat:-10,green:10,justice:6,trust:5,deaths:-2,activists:8},tag:'LONG TERM'},
-{id:'hold',title:'Hold the line',icon:'🧊',description:'Keep the budget intact and trust existing emergency services.',cost:0,effect:{heat:4,approval:-8,trust:-7,council:3,deaths:5,media:-4},tag:'RISKY'}]},
-{id:'algorithm',title:'The Algorithm Has a Blind Spot',kicker:'TURN 2 · AI AUDIT',body:'Your climate model ranks a wealthy central district above a vulnerable housing area. Residents say satellite heat cannot capture lived vulnerability.',choices:[
-{id:'override',title:'Override the model',icon:'🧠',description:'Give human vulnerability data a higher priority than the automated ranking.',cost:4,effect:{justice:10,trust:8,council:-5,approval:3,activists:8},tag:'HUMAN OVERRIDE'},
-{id:'audit',title:'Launch an independent audit',icon:'🔎',description:'Pause allocation for one cycle and publish the methodology.',cost:8,effect:{justice:7,trust:12,council:3,approval:-2,media:8},tag:'TRANSPARENT'},
-{id:'follow',title:'Follow the ranking',icon:'📊',description:'Use the model consistently and defend its statistical logic.',cost:0,effect:{trust:-6,council:7,approval:1,media:-3},tag:'TECHNOCRATIC'}]},
-{id:'developers',title:'Developers Arrive With €40M',kicker:'TURN 3 · PRIVATE CAPITAL',body:'A consortium offers major investment — but asks for weaker cooling standards and a faster planning process.',choices:[
-{id:'accept',title:'Accept the deal',icon:'🏗️',description:'Unlock jobs and investment with limited climate conditions.',cost:0,effect:{approval:5,council:10,trust:-7,justice:-8,heat:3,developers:15},tag:'GROWTH'},
-{id:'conditions',title:'Accept with conditions',icon:'⚖️',description:'Require shade, cool roofs and affordable housing.',cost:6,effect:{approval:3,council:4,trust:5,justice:6,heat:-4,developers:6,activists:4},tag:'BALANCED'},
-{id:'reject',title:'Reject the offer',icon:'🚫',description:'Protect adaptation standards and public control.',cost:0,effect:{council:-9,trust:8,justice:7,approval:-1,developers:-12,activists:8},tag:'GREEN FIRST'}]},
-{id:'elderly',title:'The Elderly Association Calls',kicker:'TURN 4 · NIGHT-TIME RISK',body:'Isolated older residents are not appearing in the top heat-risk districts because the model lacks social isolation data.',choices:[
-{id:'checkins',title:'Fund neighbour check-ins',icon:'🤝',description:'Pay community organisations to contact isolated residents.',cost:7,effect:{health:10,justice:7,trust:8,approval:5,deaths:-5,activists:4},tag:'COMMUNITY'},
-{id:'medical',title:'Expand hospital capacity',icon:'🏥',description:'Create extra heat-response beds and ambulance capacity.',cost:16,effect:{health:18,approval:6,deaths:-7,justice:2},tag:'HEALTH'},
-{id:'ignore',title:'Stay with the model',icon:'📐',description:'Do not change the allocation framework mid-year.',cost:0,effect:{health:-3,justice:-5,trust:-8,deaths:4,media:-6},tag:'CONSISTENCY'}]},
-{id:'budget',title:'Council Demands a Budget Cut',kicker:'TURN 5 · FISCAL CRISIS',body:'The finance committee says your programme is over budget. Cut a flagship project or raise a politically unpopular levy.',choices:[
-{id:'cut',title:'Cut the green programme',icon:'✂️',description:'Delay long-term tree canopy and public-space works.',cost:0,effect:{green:-8,heat:3,council:8,approval:2,trust:-4},tag:'SHORT TERM'},
-{id:'levy',title:'Introduce a climate levy',icon:'💶',description:'Raise a levy earmarked for adaptation.',cost:-15,effect:{approval:-8,trust:4,justice:4,council:-3,green:5,activists:5},tag:'BRAVE'},
-{id:'progressive',title:'Charge by ability to pay',icon:'⚖️',description:'Protect low-income households and increase contributions at the top.',cost:-8,effect:{approval:1,trust:8,justice:9,council:-6,green:3,activists:7},tag:'EQUITY'}]},
-{id:'protest',title:'A Protest Blocks City Hall',kicker:'TURN 6 · CIVIC PRESSURE',body:'Residents say showcase districts are benefiting first. Protest leaders demand a public spending map and a seat at the table.',choices:[
-{id:'assembly',title:'Open a citizens assembly',icon:'🗣️',description:'Give residents a formal role in ranking the next investments.',cost:5,effect:{trust:12,justice:7,approval:3,council:-2,activists:10},tag:'PARTICIPATION'},
-{id:'order',title:'Clear the streets',icon:'🚓',description:'Prioritise traffic and commercial continuity over negotiation.',cost:0,effect:{approval:-5,trust:-12,council:8,media:-8,activists:-15},tag:'ORDER'},
-{id:'publish',title:'Publish every euro',icon:'📋',description:'Release procurement and spending data in real time.',cost:3,effect:{trust:9,media:12,justice:5,council:-1},tag:'TRANSPARENCY'}]},
-{id:'grid',title:'The Grid Is Under Strain',kicker:'TURN 7 · BLACKOUT WARNING',body:'Cooling demand is pushing the electricity grid toward a dangerous peak. Your energy director offers three imperfect options.',choices:[
-{id:'microgrid',title:'Fund neighbourhood microgrids',icon:'⚡',description:'Build resilience in vulnerable districts and reduce peak demand.',cost:20,effect:{health:5,heat:-5,green:4,trust:7,justice:6},tag:'RESILIENCE'},
-{id:'business',title:'Protect business hours',icon:'🏢',description:'Prioritise commercial power and ask households to conserve.',cost:2,effect:{council:7,developers:8,approval:-5,justice:-6,trust:-4},tag:'ECONOMY'},
-{id:'demand',title:'Mandatory demand reduction',icon:'🔌',description:'Temporarily cap high-use buildings and public lighting.',cost:0,effect:{heat:-3,green:2,justice:4,approval:-2,developers:-5},tag:'HARD CHOICE'}]},
-{id:'housing',title:'A Housing Tower Fails Inspection',kicker:'TURN 8 · PUBLIC SAFETY',body:'Inspectors find overheating and poor ventilation in a large residential block. Evacuation is expensive; leaving people there carries risk.',choices:[
-{id:'relocate',title:'Emergency relocation',icon:'🏠',description:'Move residents into temporary housing while repairs begin.',cost:18,effect:{health:10,justice:10,trust:10,deaths:-4,approval:4},tag:'PEOPLE FIRST'},
-{id:'retrofit',title:'Fast-track retrofit',icon:'🔧',description:'Upgrade cooling and insulation while residents remain.',cost:14,effect:{heat:-6,justice:7,trust:5,developers:3},tag:'REPAIR'},
-{id:'delay',title:'Wait for annual budget',icon:'📆',description:'Avoid an emergency commitment and follow normal procurement.',cost:0,effect:{trust:-10,health:-6,justice:-7,deaths:4,media:-7},tag:'AUSTERITY'}]},
-{id:'media',title:'The Newspaper Gets Your Memo',kicker:'TURN 9 · FRONT PAGE',body:'A leaked memo shows advisers warned you about unequal heat exposure months ago. Reporters want a statement before tonight.',choices:[
-{id:'own',title:'Own the mistake',icon:'🎙️',description:'Admit the warning was real and explain what changes.',cost:0,effect:{trust:10,media:14,approval:3,justice:4},tag:'ACCOUNTABILITY'},
-{id:'attack',title:'Attack the leak',icon:'🛡️',description:'Question the source and defend the administration.',cost:0,effect:{trust:-8,media:-10,approval:2,council:5},tag:'DEFLECTION'},
-{id:'scapegoat',title:'Fire the adviser',icon:'🚪',description:'Make a senior official the face of the failure.',cost:4,effect:{approval:5,trust:-2,media:5,council:4},tag:'SCAPEGOAT'}]},
-{id:'hospital',title:'Hospitals Reach 92% Capacity',kicker:'TURN 10 · HEALTH RED ALERT',body:'Emergency departments are filling with heat-related cases. Doctors ask you to reduce exposure now, not merely fund beds.',choices:[
-{id:'closures',title:'Close the hottest public spaces',icon:'🚧',description:'Cancel events and restrict access to dangerous areas for 72 hours.',cost:4,effect:{heat:-8,health:8,deaths:-5,approval:-3,council:-2},tag:'EMERGENCY'},
-{id:'mobile',title:'Deploy mobile health teams',icon:'🚑',description:'Send clinicians and water teams directly into high-risk districts.',cost:12,effect:{health:14,justice:7,trust:7,deaths:-7,approval:4},tag:'TARGETED'},
-{id:'private',title:'Contract private capacity',icon:'🏥',description:'Buy short-term beds and ambulance capacity.',cost:20,effect:{health:20,deaths:-8,council:5,justice:-3,developers:4},tag:'FAST CAPACITY'}]},
-{id:'scandal',title:'Procurement Scandal Hits the Front Page',kicker:'TURN 11 · INTEGRITY',body:'A contractor linked to a major project is accused of favouritism. The contract is legal on paper, but the public sees a conflict of interest.',choices:[
-{id:'investigate',title:'Independent investigation',icon:'🔍',description:'Freeze the contract and let an external body review it.',cost:6,effect:{trust:14,media:10,justice:8,council:-5,developers:-8},tag:'CLEAN GOVERNMENT'},
-{id:'defend',title:'Defend the contract',icon:'📜',description:'Argue that procurement was compliant and keep construction moving.',cost:0,effect:{council:8,developers:10,trust:-10,media:-8,approval:-3},tag:'CONTINUITY'},
-{id:'hearing',title:'Renegotiate publicly',icon:'🤝',description:'Keep the project but reopen terms in a public hearing.',cost:4,effect:{trust:7,justice:6,council:2,developers:-2,media:6},tag:'COMPROMISE'}]},
-{id:'election',title:'The Final Heat Alert',kicker:'TURN 12 · ELECTION WEEK',body:'A second heat alert lands during election week. Every stakeholder has a different idea of responsible leadership.',choices:[
-{id:'vulnerable',title:'Protect the highest-risk districts',icon:'❤️',description:'Spend political and financial capital where risk is highest.',cost:8,effect:{heat:-7,justice:10,approval:8,trust:8,health:5,deaths:-4},tag:'JUSTICE'},
-{id:'network',title:'Finish the green network',icon:'🌳',description:'Deliver the visible long-term climate legacy voters can walk through.',cost:12,effect:{heat:-8,green:12,justice:6,approval:6,trust:4},tag:'CLIMATE'},
-{id:'books',title:'Balance the books',icon:'📒',description:'Freeze spending and campaign on fiscal responsibility.',cost:0,effect:{council:8,approval:5,trust:2,justice:-3,media:4},tag:'STABILITY'}]},
+  {
+    title: 'The Heatwave Is Coming',
+    kicker: 'EMERGENCY FORECAST · 38°C',
+    body: 'Meteorologists forecast three dangerous days. Hospitals ask for immediate support while your infrastructure team warns that long-term projects are already stretched.',
+    choices: [
+      {
+        id: 'shelters',
+        title: 'Open cooling shelters',
+        icon: '💧',
+        description: 'Open libraries, sports halls and schools as free cooling centres.',
+        cost: 12,
+        effect: { heat: -5, health: 8, approval: 7, justice: 5, trust: 4, council: -2, deaths: -3 },
+        tag: 'FAST RELIEF',
+      },
+      {
+        id: 'ac',
+        title: 'Emergency AC subsidy',
+        icon: '❄️',
+        description: 'Subsidise cooling bills for households that apply.',
+        cost: 18,
+        effect: { heat: -7, approval: 9, health: 6, justice: -2, trust: 2, deaths: -4 },
+        tag: 'POPULAR',
+      },
+      {
+        id: 'trees',
+        title: 'Accelerate shade programme',
+        icon: '🌳',
+        description: 'Redirect crews to trees, shade sails and reflective streets.',
+        cost: 25,
+        effect: { heat: -10, green: 10, justice: 6, approval: 2, trust: 5, council: -4, deaths: -2 },
+        tag: 'LONG TERM',
+      },
+      {
+        id: 'nothing',
+        title: 'Hold the line',
+        icon: '🧊',
+        description: 'Keep the budget intact and trust existing emergency services.',
+        cost: 0,
+        effect: { heat: 4, approval: -8, trust: -7, council: 3, deaths: 5 },
+        tag: 'RISKY',
+      },
+    ],
+  },
+  {
+    title: 'The Algorithm Has a Blind Spot',
+    kicker: 'AI AUDIT · PROCEDURAL JUSTICE',
+    body: 'Your climate model ranks a wealthy central district above an informal housing area. Residents argue that satellite heat alone cannot capture lived vulnerability.',
+    choices: [
+      {
+        id: 'override',
+        title: 'Override the model',
+        icon: '🧠',
+        description: 'Give human vulnerability data a higher priority than the automated ranking.',
+        cost: 4,
+        effect: { justice: 10, trust: 8, council: -5, approval: 3 },
+        tag: 'HUMAN OVERRIDE',
+      },
+      {
+        id: 'audit',
+        title: 'Launch an algorithm audit',
+        icon: '🔎',
+        description: 'Pause allocation for one cycle and commission an independent review.',
+        cost: 8,
+        effect: { justice: 7, trust: 12, council: 3, approval: -2 },
+        tag: 'TRANSPARENT',
+      },
+      {
+        id: 'follow',
+        title: 'Follow the ranking',
+        icon: '📊',
+        description: 'Use the model consistently and publish its methodology.',
+        cost: 0,
+        effect: { trust: -1, council: 7, approval: 1 },
+        tag: 'TECHNOCRATIC',
+      },
+    ],
+  },
+  {
+    title: 'Developers Arrive With €40M',
+    kicker: 'ECONOMY · PRIVATE CAPITAL',
+    body: 'A consortium offers major investment in a new mixed-use district — but asks for weaker cooling standards and a faster planning process.',
+    choices: [
+      {
+        id: 'accept',
+        title: 'Accept the deal',
+        icon: '🏗️',
+        description: 'Unlock private investment and jobs, with limited climate conditions.',
+        cost: 0,
+        effect: { approval: 5, council: 10, trust: -7, justice: -8, heat: 3 },
+        tag: 'GROWTH',
+      },
+      {
+        id: 'conditions',
+        title: 'Accept with conditions',
+        icon: '⚖️',
+        description: 'Require shade, cool roofs and affordable housing in the development.',
+        cost: 6,
+        effect: { approval: 3, council: 4, trust: 5, justice: 6, heat: -4 },
+        tag: 'BALANCED',
+      },
+      {
+        id: 'reject',
+        title: 'Reject the offer',
+        icon: '🚫',
+        description: 'Protect adaptation standards and keep public control.',
+        cost: 0,
+        effect: { council: -9, trust: 8, justice: 7, approval: -1 },
+        tag: 'GREEN FIRST',
+      },
+    ],
+  },
+  {
+    title: 'The Elderly Association Calls',
+    kicker: 'PUBLIC HEALTH · NIGHT-TIME RISK',
+    body: 'Night-time temperatures remain high. Isolated older residents are not appearing in the top heat-risk districts because the model lacks social isolation data.',
+    choices: [
+      {
+        id: 'checkins',
+        title: 'Fund neighbour check-ins',
+        icon: '🤝',
+        description: 'Pay community organisations to contact isolated residents.',
+        cost: 7,
+        effect: { health: 10, justice: 7, trust: 8, approval: 5, deaths: -5 },
+        tag: 'RECOGNITION',
+      },
+      {
+        id: 'medical',
+        title: 'Expand hospital capacity',
+        icon: '🏥',
+        description: 'Create extra heat-response beds and ambulance capacity.',
+        cost: 16,
+        effect: { health: 18, approval: 6, deaths: -7, justice: 2 },
+        tag: 'HEALTH',
+      },
+      {
+        id: 'ignore',
+        title: 'Stay with the model',
+        icon: '📐',
+        description: 'Do not change the allocation framework mid-year.',
+        cost: 0,
+        effect: { health: -3, justice: -5, trust: -8, deaths: 4 },
+        tag: 'CONSISTENCY',
+      },
+    ],
+  },
+  {
+    title: 'Council Demands A Budget Cut',
+    kicker: 'FISCAL CRISIS · €15M CUT',
+    body: 'The finance committee says your climate programme is over budget. You must either cut a flagship project or raise a politically unpopular local levy.',
+    choices: [
+      {
+        id: 'cut-green',
+        title: 'Cut the green programme',
+        icon: '✂️',
+        description: 'Delay long-term tree canopy and public-space works.',
+        cost: 0,
+        effect: { green: -8, heat: 3, council: 8, approval: 2, trust: -4 },
+        tag: 'SHORT TERM',
+      },
+      {
+        id: 'levy',
+        title: 'Introduce a climate levy',
+        icon: '💶',
+        description: 'Raise a modest levy earmarked for adaptation.',
+        cost: -15,
+        effect: { approval: -8, trust: 4, justice: 4, council: -3, green: 5 },
+        tag: 'BRAVE',
+      },
+      {
+        id: 'progressive',
+        title: 'Renegotiate by ability to pay',
+        icon: '⚖️',
+        description: 'Protect low-income households and increase contributions at the top.',
+        cost: -8,
+        effect: { approval: 1, trust: 8, justice: 9, council: -6, green: 3 },
+        tag: 'EQUITY',
+      },
+    ],
+  },
 ];
 
-const CAMPAIGN:CampaignChoice[]=[
-{id:'doors',title:'Door-to-door in vulnerable districts',description:'Meet residents where your climate record matters most.',cost:5,votes:7,effect:{approval:5,trust:7,justice:3}},
-{id:'debate',title:'Prime-time television debate',description:'Turn the election into a referendum on competence.',cost:8,votes:8,effect:{approval:8,media:10}},
-{id:'rally',title:'Climate manifesto rally',description:'Mobilise climate voters and activists.',cost:7,votes:7,effect:{activists:12,green:3,approval:4}},
-{id:'jobs',title:'Jobs and investment tour',description:'Show workers and developers the economic case for adaptation.',cost:6,votes:7,effect:{developers:10,council:4,approval:5}},
-{id:'record',title:'Publish your full record',description:'Put every decision, euro and outcome online.',cost:3,votes:5,effect:{trust:10,media:8}},
-{id:'contrast',title:'Attack the opposition',description:'Spend political capital on contrast rather than policy.',cost:2,votes:3,effect:{approval:3,media:3,trust:-5}},
-];
+const FINAL_EVENT: EventCard = {
+  title: 'Election Day: One Last Decision',
+  kicker: 'FINAL TURN · YOUR LEGACY',
+  body: 'You have one final intervention before voters decide. Your record is public. The question is no longer what is theoretically optimal — it is what kind of mayor you became.',
+  choices: [
+    {
+      id: 'last-mile',
+      title: 'Protect the most vulnerable',
+      icon: '❤️',
+      description: 'Spend the remaining political and financial capital on the highest-risk districts.',
+      cost: 8,
+      effect: { heat: -6, justice: 12, approval: 8, trust: 8, health: 5, deaths: -4 },
+      tag: 'JUSTICE',
+    },
+    {
+      id: 'legacy-green',
+      title: 'Finish the green network',
+      icon: '🌳',
+      description: 'Deliver the visible long-term climate legacy voters can walk through.',
+      cost: 12,
+      effect: { heat: -8, green: 12, justice: 6, approval: 6, trust: 4 },
+      tag: 'CLIMATE',
+    },
+    {
+      id: 'stability',
+      title: 'Balance the books',
+      icon: '📒',
+      description: 'Freeze spending, preserve services and campaign on fiscal responsibility.',
+      cost: 0,
+      effect: { council: 8, approval: 5, trust: 2, justice: -3 },
+      tag: 'STABILITY',
+    },
+  ],
+};
 
-function StatBar({label,value,icon}:{label:string;value:number;icon:ReactNode}){return <div className="space-y-1.5"><div className="flex justify-between text-[11px] font-semibold"><span className="flex items-center gap-1.5 text-slate-600">{icon}{label}</span><span className="font-mono">{value}</span></div><div className="h-2 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full bg-slate-900 transition-all duration-500" style={{width:`${clamp(value)}%`}}/></div></div>}
-function applyEffects(stats:Stats,effect:Effect,cost:number){const next={...stats,budget:stats.budget-cost};(Object.keys(effect) as Array<keyof Effect>).forEach(k=>{const v=effect[k];if(typeof v==='number') next[k]=clamp(next[k]+v)});next.budget=Math.round(next.budget);if(next.heat>78)next.approval=clamp(next.approval-2);if(next.justice<35)next.trust=clamp(next.trust-3);if(next.budget<12)next.council=clamp(next.council-3);if(next.media<25)next.approval=clamp(next.approval-2);return next}
-function legacy(s:Stats){const a:[string,number][]=[['CLIMATE CHAMPION',(100-s.heat)*.55+s.green*.45],['JUSTICE MAYOR',s.justice*.55+s.trust*.25+s.activists*.2],['PUBLIC HEALTH MAYOR',s.health*.65+(100-s.deaths*4)*.35],["PEOPLE'S MAYOR",s.approval*.55+s.trust*.45],['POLITICAL SURVIVOR',s.approval*.4+s.council*.6],['CLEAN GOVERNMENT MAYOR',s.trust*.55+s.media*.45]];return a.sort((x,y)=>y[1]-x[1])[0][0]}
-function endingFor(s:Stats,votes:number){if(s.deaths>=16||s.heat>=92)return {win:false,title:'CLIMATE FAILURE',text:'The city endured a preventable public-health disaster. Your administration kept plans on paper while heat became an emergency.'};if(s.budget<-5)return {win:false,title:'FISCAL COLLAPSE',text:'The adaptation programme ran out of money before it could become resilient. The council appointed an emergency budget committee.'};if(s.justice<28)return {win:false,title:'JUSTICE FAILURE',text:'The city cooled its most visible districts while vulnerable communities remained exposed.'};if(s.trust<18)return {win:false,title:'TRUST COLLAPSE',text:'Even policies that worked became politically fragile because citizens stopped believing the administration.'};if(votes<50||s.approval<28)return {win:false,title:'ELECTION DEFEAT',text:'You lost the election. Voters agreed they wanted a different mayor.'};if(s.heat<=42&&s.justice>=72&&s.approval>=68&&s.trust>=68)return {win:true,title:'THE PEOPLE’S MAYOR',text:'You cooled the city without losing the people. Your administration became a case study in climate action with legitimacy.'};return {win:true,title:legacy(s),text:'You did not find a perfect solution. You made trade-offs, exposed who benefited, and left a measurable legacy.'}}
+function clamp(n: number, min = 0, max = 100) {
+  return Math.max(min, Math.min(max, Math.round(n)));
+}
 
-export default function MayorSandbox(){
- const [screen,setScreen]=useState<Screen>('intro'); const [city,setCity]=useState<CityKey>('Brussels'); const [turn,setTurn]=useState(1); const [stats,setStats]=useState<Stats>(BASE_STATS); const [districtIndex,setDistrictIndex]=useState(0); const [log,setLog]=useState<string[]>([]); const [last,setLast]=useState<string|null>(null); const [campaignBudget,setCampaignBudget]=useState(30); const [campaignVotes,setCampaignVotes]=useState(0); const [campaignLog,setCampaignLog]=useState<string[]>([]);
- const districts=CITIES[city].districts; const district=districts[districtIndex]; const event=EVENTS[turn-1];
- const risks=useMemo(()=>districts.map(d=>({...d,score:Math.round(d.heat*.5+d.poverty*.25+d.elderly*.15+d.housing*.1)})).sort((a,b)=>b.score-a.score),[districts]);
- const reset=()=>{setScreen('intro');setCity('Brussels');setTurn(1);setStats(BASE_STATS);setDistrictIndex(0);setLog([]);setLast(null);setCampaignBudget(30);setCampaignVotes(0);setCampaignLog([])};
- const start=()=>{setScreen('city');setStats(BASE_STATS);setTurn(1);setLog([]);setCampaignBudget(30);setCampaignVotes(0);setCampaignLog([])};
- const choose=(c:Choice)=>{if(c.cost>stats.budget)return;let next=applyEffects(stats,c.effect,c.cost);const risk=Math.round(district.heat*.6+district.poverty*.25+district.elderly*.15);if(risk>=82)next.justice=clamp(next.justice+2);setStats(next);setLast(c.id);setLog(old=>[`Turn ${turn}: ${c.title} · ${district.name}`,...old].slice(0,10));if(turn===12){setScreen('campaign')}else{setTurn(t=>t+1);setDistrictIndex(i=>(i+1)%districts.length)}};
- const campaign=(c:CampaignChoice)=>{if(c.cost>campaignBudget)return;setCampaignBudget(b=>b-c.cost);setCampaignVotes(v=>v+c.votes);setStats(s=>applyEffects(s,c.effect,0));setCampaignLog(old=>[c.title,...old].slice(0,8))};
- const finish=()=>setScreen('end'); const result=endingFor(stats,campaignVotes);
- if(screen==='intro')return <main className="min-h-screen bg-[#0d1117] text-white"><div className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-12"><div className="grid w-full gap-12 lg:grid-cols-[1.2fr_.8fr]"><section className="self-center"><div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.18em] text-orange-300"><BrainCircuit className="size-3.5"/>Urban AI Governance Game</div><h1 className="font-serif text-5xl font-black leading-none md:text-7xl">WHO GETS<br/><span className="text-orange-400">COOLED?</span></h1><p className="mt-6 max-w-2xl text-lg leading-7 text-slate-300">You are the mayor. A heatwave is coming, citizens disagree, money is finite, AI is imperfect and an election is waiting.</p><div className="mt-8 flex flex-wrap gap-3 text-xs font-semibold">{['12 unique crises','4 cities','40+ decisions','Campaign phase','Multiple endings','District targeting'].map(x=><span key={x} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">{x}</span>)}</div><button onClick={start} className="mt-10 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-black hover:bg-orange-400">ENTER THE MAYOR’S OFFICE <ArrowRight className="size-4"/></button></section><section className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><div className="rounded-2xl bg-[#161d26] p-5"><div className="flex justify-between border-b border-white/10 pb-4"><span className="text-xs font-bold uppercase tracking-widest text-slate-400">Emergency dashboard</span><span className="rounded-md bg-red-500/10 px-2 py-1 text-[10px] font-bold text-red-300">LIVE</span></div><div className="grid grid-cols-2 gap-3 py-5">{[['🌡️','Heat risk','68'],['⚖️','Justice','50'],['👍','Approval','60'],['💶','Budget','€100M']].map(([i,l,v])=><div key={l} className="rounded-xl border border-white/5 bg-white/[.03] p-4"><div className="text-lg">{i}</div><div className="mt-3 text-[10px] uppercase tracking-wider text-slate-500">{l}</div><div className="mt-1 font-mono text-xl font-bold">{v}</div></div>)}</div><div className="rounded-xl border border-orange-400/20 bg-orange-400/5 p-4 text-xs leading-5 text-orange-100"><b>Mayor’s briefing:</b> AI can rank risk. It cannot decide what your city owes its people.</div></div></section></div></div></main>;
- if(screen==='city')return <main className="min-h-screen bg-[#fafaf9] text-slate-900"><div className="mx-auto max-w-6xl px-5 py-10"><span className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Step 01 · Choose your city</span><h1 className="mt-2 font-serif text-4xl font-black md:text-5xl">Every city has a different political problem.</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600">The rules are shared, but the pressure points are not.</p><div className="mt-8 grid gap-4 md:grid-cols-2">{(Object.keys(CITIES) as CityKey[]).map(k=>{const c=CITIES[k],active=city===k;return <button key={k} onClick={()=>setCity(k)} className={`rounded-2xl border p-6 text-left transition ${active?'border-slate-900 bg-slate-950 text-white shadow-xl':'border-stone-200 bg-white hover:border-stone-400'}`}><div className="flex justify-between"><span className="text-4xl">{c.emoji}</span><span className="rounded-full bg-stone-100 px-2 py-1 text-[10px] font-bold text-stone-500">{active?'SELECTED':'SELECT'}</span></div><h2 className="mt-5 text-2xl font-black">{k}</h2><p className="mt-1 text-xs font-semibold text-orange-600">{c.subtitle}</p><p className="mt-4 text-sm leading-6 opacity-80">{c.description}</p></button>})}</div><div className="mt-8 flex items-center justify-between rounded-2xl border border-stone-200 bg-white p-5"><div><p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Your choice</p><p className="mt-1 font-serif text-xl font-bold">{CITIES[city].emoji} {city}</p></div><button onClick={()=>setScreen('game')} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white hover:bg-orange-600">TAKE OFFICE <ArrowRight className="size-4"/></button></div></div></main>;
- if(screen==='campaign')return <main className="min-h-screen bg-[#0d1117] px-5 py-10 text-white"><div className="mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-5"><div><div className="text-xs font-black uppercase tracking-[.2em] text-orange-300">ACT IV · ELECTION WEEK</div><h1 className="mt-2 font-serif text-5xl font-black md:text-7xl">Now convince the voters.</h1><p className="mt-4 max-w-2xl text-slate-300">Your governing record is locked. You have a final campaign war chest. Spend it on persuasion, not miracles.</p></div><div className="rounded-2xl border border-white/10 bg-white/[.05] p-5"><div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Campaign war chest</div><div className="mt-1 font-mono text-3xl font-black">{money(campaignBudget)}</div><div className="mt-1 text-xs text-slate-400">Campaign votes: +{campaignVotes}</div></div></div><div className="mt-8 grid gap-5 lg:grid-cols-[1fr_330px]"><section className="grid gap-3 md:grid-cols-2">{CAMPAIGN.map(c=>{const dis=c.cost>campaignBudget;return <button key={c.id} disabled={dis} onClick={()=>campaign(c)} className={`rounded-2xl border p-5 text-left transition ${dis?'cursor-not-allowed border-white/5 bg-white/[.02] opacity-40':'border-white/10 bg-white/[.04] hover:border-orange-400/50 hover:bg-white/[.07]'}`}><div className="flex justify-between"><span className="text-2xl">📣</span><span className="font-mono text-xs text-orange-300">-{money(c.cost)}</span></div><h2 className="mt-5 text-lg font-black">{c.title}</h2><p className="mt-2 text-xs leading-5 text-slate-400">{c.description}</p><div className="mt-3 text-[10px] font-black text-orange-300">+{c.votes} VOTE POINTS</div></button>})}</section><aside className="rounded-2xl border border-white/10 bg-white/[.04] p-5"><div className="text-xs font-black uppercase tracking-widest text-orange-300">Campaign intelligence</div><div className="mt-4 space-y-3 text-xs text-slate-300"><p>👍 Approval <b>{stats.approval}</b></p><p>🤝 Trust <b>{stats.trust}</b></p><p>📺 Media <b>{stats.media}</b></p><p>🌳 Green <b>{stats.green}</b></p><p>⚖️ Justice <b>{stats.justice}</b></p></div><div className="mt-6 rounded-xl bg-orange-400/10 p-4 text-xs leading-5 text-orange-100"><b>Election rule:</b> campaign points amplify a credible record. They cannot erase a catastrophe.</div><div className="mt-6 space-y-2">{campaignLog.map(x=><div key={x} className="text-[10px] text-slate-400">✓ {x}</div>)}</div><button onClick={finish} className="mt-6 w-full rounded-xl bg-orange-500 px-4 py-3 text-xs font-black hover:bg-orange-400">CLOSE POLLS <ArrowRight className="ml-1 inline size-4"/></button></aside></div></div></main>;
- if(screen==='end'){const balanced=stats.heat<=48&&stats.justice>=68&&stats.approval>=65&&stats.trust>=65&&stats.budget>=5;return <main className="min-h-screen bg-[#0d1117] px-5 py-10 text-white"><div className="mx-auto max-w-6xl"><div className={`rounded-3xl border p-8 md:p-12 ${result.win?'border-orange-400/20 bg-orange-400/[.04]':'border-red-400/20 bg-red-400/[.04]'}`}><div className="text-xs font-black uppercase tracking-[.2em] text-orange-300">Election night · result</div><h1 className="mt-3 font-serif text-5xl font-black md:text-7xl">{result.title}</h1><p className="mt-5 max-w-3xl text-base leading-7 text-slate-300">{result.text}</p><div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[['🌡️','Heat',stats.heat,stats.heat<=48],['⚖️','Justice',stats.justice,stats.justice>=68],['👍','Approval',stats.approval,stats.approval>=65],['🤝','Trust',stats.trust,stats.trust>=65],['🏛️','Council',stats.council,stats.council>=50],['🏥','Health',stats.health,stats.health>=65],['🌳','Green',stats.green,stats.green>=50],['💶','Budget',money(stats.budget),stats.budget>=5]].map(([i,l,v,g])=><div key={String(l)} className="rounded-xl border border-white/10 bg-white/[.04] p-4"><div className="flex justify-between"><span>{i}</span>{g?<Check className="size-4 text-emerald-300"/>:<span className="text-slate-600">—</span>}</div><div className="mt-3 text-[10px] uppercase tracking-wider text-slate-500">{l}</div><div className="mt-1 font-mono text-2xl font-black">{v}</div></div>)}</div><div className="mt-8 grid gap-5 md:grid-cols-[1fr_.8fr]"><div className="rounded-2xl border border-white/10 bg-white/[.03] p-5"><div className="flex items-center gap-2 text-sm font-bold"><Trophy className="size-4 text-orange-300"/>Your decisions</div><div className="mt-4 space-y-3 text-xs text-slate-300">{log.slice().reverse().map(x=><div key={x} className="flex gap-2"><ChevronRight className="size-3 text-orange-300"/>{x}</div>)}</div></div><div className="rounded-2xl bg-white p-5 text-slate-900"><p className="text-xs font-black uppercase tracking-widest text-stone-400">Your mayoral legacy</p><p className="mt-3 font-serif text-2xl font-bold">{balanced?'You found a rare balance between climate, justice and legitimacy.':`You became the ${legacy(stats).toLowerCase()}.`}</p><p className="mt-4 text-xs leading-5 text-stone-500">Campaign points: {campaignVotes}. The next mayor inherits both your infrastructure and your political consequences.</p></div></div><button onClick={reset} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-xs font-black hover:bg-orange-400">PLAY AGAIN <Sparkles className="size-4"/></button></div></div></main>}
- return <main className="min-h-screen bg-[#f5f5f2] text-slate-900"><header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur"><div className="mx-auto flex max-w-[1500px] items-center justify-between px-4 py-3"><div className="flex items-center gap-3"><div className="grid size-10 place-items-center rounded-xl bg-slate-950">👑</div><div><div className="font-serif text-sm font-black">WHO GETS COOLED?</div><div className="text-[10px] font-semibold text-stone-400">{CITIES[city].emoji} {city} · MAYOR MODE</div></div></div><div className="flex items-center gap-2"><span className="rounded-lg bg-stone-100 px-3 py-2 text-[10px] font-black uppercase">Crisis {turn}/12</span><span className="rounded-lg bg-slate-950 px-3 py-2 text-[10px] font-black text-white">{money(stats.budget)}</span><button onClick={reset} className="rounded-lg border border-stone-200 p-2"><X className="size-4"/></button></div></div></header><div className="mx-auto max-w-[1500px] px-4 py-5"><div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)_380px]"><aside className="space-y-4"><div className="rounded-2xl border border-stone-200 bg-white p-4"><div className="mb-4 flex justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-stone-400">City pulse</span><BarChart3 className="size-4 text-orange-600"/></div><div className="space-y-4"><StatBar label="Heat risk" value={stats.heat} icon={<Zap className="size-3 text-red-500"/>}/><StatBar label="Spatial justice" value={stats.justice} icon={<Scale className="size-3 text-blue-500"/>}/><StatBar label="Approval" value={stats.approval} icon={<Users className="size-3 text-emerald-500"/>}/><StatBar label="Trust" value={stats.trust} icon={<HeartPulse className="size-3 text-pink-500"/>}/><StatBar label="Council" value={stats.council} icon={<Gavel className="size-3 text-violet-500"/>}/><StatBar label="Green coverage" value={stats.green} icon={<Leaf className="size-3 text-green-600"/>}/><StatBar label="Health capacity" value={stats.health} icon={<ShieldAlert className="size-3 text-cyan-600"/>}/></div></div><div className="rounded-2xl bg-slate-950 p-4 text-white"><div className="flex items-center gap-2 text-xs font-bold"><Coins className="size-4 text-orange-300"/>Budget office</div><div className="mt-2 font-mono text-3xl font-black">{money(stats.budget)}</div><p className="mt-2 text-[10px] text-slate-400">Fiscal room changes how much political freedom you have later.</p></div><div className="rounded-2xl border border-stone-200 bg-white p-4"><div className="mb-3 flex items-center gap-2 text-xs font-black"><Megaphone className="size-4 text-orange-600"/>Stakeholder radar</div><div className="space-y-2 text-[11px]"><div className="flex justify-between"><span>Citizens</span><b>{stats.approval}</b></div><div className="flex justify-between"><span>Community</span><b>{stats.activists}</b></div><div className="flex justify-between"><span>Council</span><b>{stats.council}</b></div><div className="flex justify-between"><span>Developers</span><b>{stats.developers}</b></div><div className="flex justify-between"><span>Media</span><b>{stats.media}</b></div></div></div></aside><section className="space-y-5"><div className="relative min-h-[500px] overflow-hidden rounded-3xl border border-stone-200 bg-[#dfe8e2]"><div className="absolute inset-0 opacity-60" style={{backgroundImage:'linear-gradient(30deg,rgba(255,255,255,.7) 12%,transparent 12.5%,transparent 87%,rgba(255,255,255,.7) 87.5%,rgba(255,255,255,.7)),linear-gradient(150deg,rgba(255,255,255,.7) 12%,transparent 12.5%,transparent 87%,rgba(255,255,255,.7) 87.5%,rgba(255,255,255,.7))',backgroundSize:'80px 140px',backgroundPosition:'0 0,40px 70px'}}/><div className="absolute left-5 top-5 z-10 rounded-xl border border-white/70 bg-white/85 p-3"><div className="text-[10px] font-black uppercase tracking-widest text-stone-400">Priority map</div><div className="font-serif text-xl font-bold">Who should be cooled first?</div></div>{districts.map((d,i)=>{const selected=i===districtIndex,risk=Math.round(d.heat*.6+d.poverty*.25+d.elderly*.15),size=40+Math.round(risk*.35);return <button key={d.name} onClick={()=>setDistrictIndex(i)} className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white shadow-xl transition hover:scale-110 ${selected?'ring-4 ring-orange-400/60':''}`} style={{left:`${d.x}%`,top:`${d.y}%`,width:size,height:size,background:risk>80?'#dc2626':risk>65?'#f59e0b':'#0f766e'}}><span className="text-[9px] font-black text-white">{risk}</span></button>})}<div className="absolute bottom-5 left-5 z-10 rounded-xl border border-white/70 bg-white/85 p-2 text-[9px] font-bold">🔴 Critical · 🟠 High · 🟢 Lower</div></div><div className="rounded-2xl border border-stone-200 bg-white p-5"><div className="text-[10px] font-black uppercase tracking-widest text-orange-600">Selected district</div><h2 className="mt-1 font-serif text-2xl font-black">{district.name}</h2><p className="mt-1 text-xs text-stone-500">AI priority score: <b>{risks.find(x=>x.name===district.name)?.score}</b>/100</p><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">{[['Heat',district.heat],['Poverty',district.poverty],['Elderly',district.elderly],['Housing',district.housing],['Green',district.green]].map(([l,v])=><div key={String(l)} className="rounded-xl bg-stone-50 p-3"><div className="text-[9px] font-bold uppercase text-stone-400">{l}</div><div className="mt-1 font-mono text-lg font-black">{v}</div></div>)}</div></div></section><aside className="space-y-4"><div className="rounded-2xl border border-orange-200 bg-white p-5 shadow-sm"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-orange-600"><Sparkles className="size-4"/>{event.kicker}</div><h2 className="mt-3 font-serif text-3xl font-black leading-tight">{event.title}</h2><p className="mt-3 text-sm leading-6 text-stone-600">{event.body}</p><div className="mt-5 space-y-2">{event.choices.map(c=>{const disabled=c.cost>stats.budget;return <button key={c.id} disabled={disabled} onClick={()=>choose(c)} className={`w-full rounded-xl border p-3 text-left transition ${disabled?'cursor-not-allowed border-stone-100 bg-stone-50 opacity-45':'border-stone-200 bg-stone-50 hover:border-slate-900 hover:bg-white'}`}><div className="flex gap-3"><span className="text-xl">{c.icon}</span><span className="min-w-0 flex-1"><span className="flex justify-between gap-2"><span className="text-xs font-black">{c.title}</span><span className="font-mono text-[10px] font-black text-orange-700">{c.cost===0?'FREE':c.cost<0?`+${money(-c.cost)}`:`-${money(c.cost)}`}</span></span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{c.description}</span><span className="mt-2 inline-block rounded bg-white px-1.5 py-1 text-[8px] font-black text-stone-400">{c.tag}</span></span></div></button>})}</div></div><div className="rounded-2xl border border-stone-200 bg-white p-4"><div className="text-[10px] font-black uppercase tracking-widest text-stone-400">Decision log</div><div className="mt-3 space-y-2">{log.map(x=><div key={x} className="flex gap-2 text-[10px] leading-4 text-stone-600"><Check className="mt-0.5 size-3 shrink-0 text-emerald-600"/>{x}</div>)}</div></div><div className="rounded-2xl bg-slate-950 p-4 text-white"><div className="flex items-center gap-2 text-xs font-bold"><BrainCircuit className="size-4 text-sky-300"/>AI advisory note</div><p className="mt-3 text-[11px] leading-5 text-slate-300">{stats.justice<40?'Warning: the most vulnerable districts are losing ground.':stats.heat>75?'Emergency advice: reduce exposure before adding long-term infrastructure.':stats.trust<40?'Political advice: publish evidence and explain who benefits.':'The model can structure evidence, but the weights are political choices. You are still accountable for the outcome.'}</p></div></aside></div></div></main>;
+function money(n: number) {
+  return `€${Math.abs(n).toFixed(0)}M`;
+}
+
+function getLegacy(stats: Stats) {
+  const scores = [
+    { key: 'CLIMATE CHAMPION', score: (100 - stats.heat) * 0.7 + stats.green * 0.3 },
+    { key: 'JUSTICE MAYOR', score: stats.justice * 0.8 + stats.trust * 0.2 },
+    { key: 'PUBLIC HEALTH MAYOR', score: stats.health * 0.8 + (100 - stats.deaths * 4) * 0.2 },
+    { key: "PEOPLE'S MAYOR", score: stats.approval * 0.55 + stats.trust * 0.45 },
+    { key: 'POLITICAL SURVIVOR', score: stats.approval * 0.45 + stats.council * 0.55 },
+    { key: 'BALANCED MAYOR', score: (
+      (100 - stats.heat) +
+      stats.justice +
+      stats.approval +
+      stats.trust +
+      stats.council +
+      stats.health
+    ) / 6 },
+  ].sort((a, b) => b.score - a.score);
+
+  const balanced =
+    stats.heat <= 48 &&
+    stats.justice >= 68 &&
+    stats.approval >= 65 &&
+    stats.trust >= 65 &&
+    stats.council >= 50 &&
+    stats.budget >= 5;
+
+  return balanced ? 'BALANCED MAYOR' : scores[0].key;
+}
+
+function endingFor(stats: Stats) {
+  if (stats.deaths >= 16 || stats.heat >= 90) {
+    return {
+      type: 'LOSS',
+      title: 'CLIMATE FAILURE',
+      text: 'The city endured a preventable public-health disaster. Your administration kept plans on paper while heat became an emergency.',
+    };
+  }
+  if (stats.budget < 0) {
+    return {
+      type: 'LOSS',
+      title: 'FISCAL COLLAPSE',
+      text: 'The adaptation programme ran out of money before it could become resilient. The council appointed an emergency budget committee.',
+    };
+  }
+  if (stats.approval < 25 || stats.trust < 20) {
+    return {
+      type: 'LOSS',
+      title: 'ELECTION DEFEAT',
+      text: 'Voters did not trust the direction of your administration. Your successor inherits a city still searching for a climate consensus.',
+    };
+  }
+  if (stats.justice < 30) {
+    return {
+      type: 'LOSS',
+      title: 'JUSTICE FAILURE',
+      text: 'The city cooled its most visible districts while vulnerable communities remained exposed. The audit labels the programme distributively unjust.',
+    };
+  }
+  return {
+    type: 'WIN',
+    title: getLegacy(stats),
+    text: 'You did not find a perfect solution. You made trade-offs, exposed who benefited, and left a measurable legacy.',
+  };
+}
+
+function StatBar({
+  label,
+  value,
+  icon,
+  inverse = false,
+}: {
+  label: string;
+  value: number;
+  icon: ReactNode;
+  inverse?: boolean;
+}) {
+  const shown = inverse ? Math.max(0, 100 - value) : value;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[11px] font-semibold">
+        <span className="flex items-center gap-1.5 text-slate-600">{icon}{label}</span>
+        <span className="font-mono text-slate-900">{value}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-stone-100">
+        <div className="h-full rounded-full bg-slate-900 transition-all duration-500" style={{ width: `${shown}%` }} />
+      </div>
+    </div>
+  );
+}
+
+export default function MayorSandbox() {
+  const [screen, setScreen] = useState<'intro' | 'city' | 'game' | 'end'>('intro');
+  const [city, setCity] = useState<CityKey>('Brussels');
+  const [turn, setTurn] = useState(1);
+  const [stats, setStats] = useState<Stats>(BASE_STATS);
+  const [eventIndex, setEventIndex] = useState(0);
+  const [selectedDistrict, setSelectedDistrict] = useState(0);
+  const [log, setLog] = useState<string[]>([]);
+  const [lastChoice, setLastChoice] = useState<string | null>(null);
+
+  const currentEvent = turn === 12 ? FINAL_EVENT : EVENTS[eventIndex % EVENTS.length];
+  const districts = CITIES[city].districts;
+  const district = districts[selectedDistrict];
+
+  const weightedRisk = useMemo(() => {
+    return districts
+      .map((d) => ({
+        ...d,
+        score: Math.round(d.heat * 0.5 + d.poverty * 0.25 + d.elderly * 0.15 + d.housing * 0.1),
+      }))
+      .sort((a, b) => b.score - a.score);
+  }, [districts]);
+
+  const reset = () => {
+    setScreen('intro');
+    setCity('Brussels');
+    setTurn(1);
+    setStats(BASE_STATS);
+    setEventIndex(0);
+    setSelectedDistrict(0);
+    setLog([]);
+    setLastChoice(null);
+  };
+
+  const startGame = () => {
+    setScreen('city');
+    setStats(BASE_STATS);
+    setTurn(1);
+    setEventIndex(0);
+    setLog([]);
+    setLastChoice(null);
+  };
+
+  const chooseCity = (next: CityKey) => {
+    setCity(next);
+    setSelectedDistrict(0);
+  };
+
+  const applyChoice = (choice: Decision) => {
+    const next: Stats = { ...stats };
+
+    next.budget -= choice.cost;
+    (Object.keys(choice.effect) as Array<keyof Effect>).forEach((key) => {
+      if (key === 'months') return;
+      const delta = choice.effect[key] ?? 0;
+      const statKey = key as keyof Stats;
+      next[statKey] = clamp(next[statKey] + delta);
+    });
+
+    // Small systemic effects: heat amplifies approval pressure, and poor justice
+    // makes future events harder.
+    if (next.heat > 75) next.approval = clamp(next.approval - 2);
+    if (next.justice < 35) next.trust = clamp(next.trust - 2);
+    if (next.budget < 10) next.council = clamp(next.council - 2);
+
+    setStats(next);
+    setLastChoice(choice.id);
+    setLog((old) => [`Turn ${turn}: ${choice.title}`, ...old].slice(0, 6));
+
+    if (turn >= 12) {
+      setScreen('end');
+      return;
+    }
+
+    setTurn((t) => t + 1);
+    setEventIndex((i) => i + 1);
+  };
+
+  const end = endingFor(stats);
+
+  if (screen === 'intro') {
+    return (
+      <main className="min-h-screen bg-[#0d1117] text-white">
+        <div className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-12">
+          <div className="grid w-full gap-12 lg:grid-cols-[1.2fr_.8fr] lg:items-center">
+            <section>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-bold uppercase tracking-[.18em] text-orange-300">
+                <BrainCircuit className="size-3.5" /> Urban AI Governance Game
+              </div>
+              <h1 className="max-w-3xl font-serif text-5xl font-black leading-[.98] tracking-tight md:text-7xl">
+                WHO GETS
+                <br />
+                <span className="text-orange-400">COOLED?</span>
+              </h1>
+              <p className="mt-6 max-w-2xl text-base leading-7 text-slate-300 md:text-lg">
+                You are the mayor. A heatwave is coming. Your budget is finite,
+                your citizens disagree, and your algorithm is not neutral.
+                Protect the city — and survive the politics.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3 text-xs font-semibold">
+                {['12 turns', '4 cities', '20+ decisions', 'Multiple endings'].map((x) => (
+                  <span key={x} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">{x}</span>
+                ))}
+              </div>
+              <button
+                onClick={startGame}
+                className="mt-10 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-orange-950/30 transition hover:bg-orange-400"
+              >
+                ENTER THE MAYOR'S OFFICE <ArrowRight className="size-4" />
+              </button>
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-white/[.04] p-5 shadow-2xl">
+              <div className="rounded-2xl bg-[#161d26] p-5">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Emergency dashboard</span>
+                  <span className="rounded-md bg-red-500/10 px-2 py-1 text-[10px] font-bold text-red-300">LIVE</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 py-5">
+                  {[
+                    ['🌡️', 'Heat risk', '68'],
+                    ['⚖️', 'Justice', '50'],
+                    ['👍', 'Approval', '60'],
+                    ['💶', 'Budget', '€100M'],
+                  ].map(([icon, label, value]) => (
+                    <div key={label} className="rounded-xl border border-white/5 bg-white/[.03] p-4">
+                      <div className="text-lg">{icon}</div>
+                      <div className="mt-3 text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+                      <div className="mt-1 font-mono text-xl font-bold">{value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl border border-orange-400/20 bg-orange-400/5 p-4 text-xs leading-5 text-orange-100">
+                  <strong>Mayor's briefing:</strong> “AI can rank risk. It cannot decide what your city owes its people.”
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (screen === 'city') {
+    return (
+      <main className="min-h-screen bg-[#fafaf9] text-slate-900">
+        <div className="mx-auto max-w-6xl px-5 py-10 md:px-8">
+          <div className="mb-8">
+            <span className="text-xs font-black uppercase tracking-[.18em] text-orange-600">Step 01 · Choose your city</span>
+            <h1 className="mt-2 font-serif text-4xl font-black md:text-5xl">Every city has a different political problem.</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600">The rules are shared, but the pressure points are not. Choose where you want to govern.</p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {(Object.keys(CITIES) as CityKey[]).map((key) => {
+              const c = CITIES[key];
+              const active = city === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => chooseCity(key)}
+                  className={`group rounded-2xl border p-6 text-left transition ${
+                    active ? 'border-slate-900 bg-slate-950 text-white shadow-xl' : 'border-stone-200 bg-white hover:border-stone-400'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="text-4xl">{c.emoji}</span>
+                    <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${active ? 'bg-white/10 text-orange-300' : 'bg-stone-100 text-stone-500'}`}>
+                      {active ? 'SELECTED' : 'SELECT'}
+                    </span>
+                  </div>
+                  <h2 className="mt-5 text-2xl font-black">{key}</h2>
+                  <p className={`mt-1 text-xs font-semibold ${active ? 'text-orange-300' : 'text-orange-700'}`}>{c.subtitle}</p>
+                  <p className={`mt-4 text-sm leading-6 ${active ? 'text-slate-300' : 'text-stone-600'}`}>{c.description}</p>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 flex items-center justify-between rounded-2xl border border-stone-200 bg-white p-5">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Your choice</p>
+              <p className="mt-1 font-serif text-xl font-bold">{CITIES[city].emoji} {city}</p>
+            </div>
+            <button onClick={() => setScreen('game')} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-xs font-black text-white hover:bg-orange-600">
+              TAKE OFFICE <ArrowRight className="size-4" />
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (screen === 'end') {
+    const balanced = end.title === 'BALANCED MAYOR';
+    return (
+      <main className="min-h-screen bg-[#0d1117] px-5 py-10 text-white">
+        <div className="mx-auto max-w-5xl">
+          <div className={`rounded-3xl border p-8 md:p-12 ${end.type === 'WIN' ? 'border-orange-400/20 bg-orange-400/[.04]' : 'border-red-400/20 bg-red-400/[.04]'}`}>
+            <div className="text-xs font-black uppercase tracking-[.2em] text-orange-300">
+              {end.type === 'WIN' ? '12 turns completed · Election result' : 'Administration concluded'}
+            </div>
+            <h1 className="mt-3 max-w-4xl font-serif text-5xl font-black md:text-7xl">{end.title}</h1>
+            <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300">{end.text}</p>
+
+            <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ['🌡️', 'Heat risk', stats.heat, stats.heat <= 48],
+                ['⚖️', 'Justice', stats.justice, stats.justice >= 68],
+                ['👍', 'Approval', stats.approval, stats.approval >= 65],
+                ['🤝', 'Trust', stats.trust, stats.trust >= 65],
+                ['🏛️', 'Council', stats.council, stats.council >= 50],
+                ['🏥', 'Health', stats.health, stats.health >= 65],
+                ['🌳', 'Green', stats.green, stats.green >= 50],
+                ['💶', 'Budget', money(stats.budget), stats.budget >= 5],
+              ].map(([icon, label, value, good]) => (
+                <div key={String(label)} className="rounded-xl border border-white/10 bg-white/[.04] p-4">
+                  <div className="flex items-center justify-between">
+                    <span>{icon}</span>
+                    {good ? <Check className="size-4 text-emerald-300" /> : <span className="text-xs text-slate-500">—</span>}
+                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-wider text-slate-500">{label}</div>
+                  <div className="mt-1 font-mono text-2xl font-black">{value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 grid gap-5 md:grid-cols-[1fr_.8fr]">
+              <div className="rounded-2xl border border-white/10 bg-white/[.03] p-5">
+                <div className="flex items-center gap-2 text-sm font-bold"><Trophy className="size-4 text-orange-300" /> Your legacy</div>
+                <div className="mt-4 space-y-3 text-xs text-slate-300">
+                  {log.slice().reverse().map((item) => (
+                    <div key={item} className="flex items-center gap-2"><ChevronRight className="size-3 text-orange-300" />{item}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white p-5 text-slate-900">
+                <p className="text-xs font-black uppercase tracking-widest text-stone-400">The question you leave behind</p>
+                <p className="mt-3 font-serif text-2xl font-bold leading-tight">
+                  “Who did the city protect first — and who paid the price?”
+                </p>
+                <p className="mt-4 text-xs leading-5 text-stone-500">
+                  {balanced
+                    ? 'You kept climate performance, justice, trust and political stability above the danger thresholds.'
+                    : 'A different weighting of climate, social vulnerability and political capital would have produced a different city.'}
+                </p>
+              </div>
+            </div>
+
+            <button onClick={reset} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-xs font-black hover:bg-orange-400">
+              PLAY AGAIN <Sparkles className="size-4" />
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f5f5f2] text-slate-900">
+      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1500px] items-center justify-between gap-4 px-4 py-3 md:px-6">
+          <div className="flex items-center gap-3">
+            <div className="grid size-10 place-items-center rounded-xl bg-slate-950 text-lg">👑</div>
+            <div>
+              <div className="font-serif text-sm font-black">WHO GETS COOLED?</div>
+              <div className="text-[10px] font-semibold text-stone-400">{CITIES[city].emoji} {city} · MAYOR MODE</div>
+            </div>
+          </div>
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="rounded-lg bg-stone-100 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-stone-500">Turn {turn} / 12</span>
+            <span className="rounded-lg bg-slate-950 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white">{money(stats.budget)} remaining</span>
+          </div>
+          <button onClick={reset} className="rounded-lg border border-stone-200 p-2 text-stone-500 hover:bg-stone-100" title="Restart">
+            <X className="size-4" />
+          </button>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-[1500px] px-4 py-5 md:px-6">
+        <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)_360px]">
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">City pulse</span>
+                <BarChart3 className="size-4 text-orange-600" />
+              </div>
+              <div className="space-y-4">
+                <StatBar label="Heat risk" value={stats.heat} icon={<Zap className="size-3 text-red-500" />} />
+                <StatBar label="Spatial justice" value={stats.justice} icon={<Scale className="size-3 text-blue-500" />} />
+                <StatBar label="Public approval" value={stats.approval} icon={<Users className="size-3 text-emerald-500" />} />
+                <StatBar label="Citizen trust" value={stats.trust} icon={<HeartPulse className="size-3 text-pink-500" />} />
+                <StatBar label="Council support" value={stats.council} icon={<Gavel className="size-3 text-violet-500" />} />
+                <StatBar label="Green coverage" value={stats.green} icon={<Leaf className="size-3 text-green-600" />} />
+                <StatBar label="Health capacity" value={stats.health} icon={<ShieldAlert className="size-3 text-cyan-600" />} />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-stone-200 bg-slate-950 p-4 text-white">
+              <div className="flex items-center gap-2 text-xs font-bold"><Coins className="size-4 text-orange-300" /> Budget office</div>
+              <div className="mt-2 font-mono text-3xl font-black">{money(stats.budget)}</div>
+              <div className="mt-2 text-[10px] leading-4 text-slate-400">Spend now, pay later — or preserve fiscal room for the next crisis.</div>
+            </div>
+
+            <div className="rounded-2xl border border-stone-200 bg-white p-4">
+              <div className="mb-3 flex items-center gap-2 text-xs font-black"><Megaphone className="size-4 text-orange-600" /> Stakeholder radar</div>
+              <div className="space-y-2 text-[11px]">
+                <div className="flex justify-between"><span>Citizens</span><b>{stats.approval}/100</b></div>
+                <div className="flex justify-between"><span>Community groups</span><b>{stats.trust}/100</b></div>
+                <div className="flex justify-between"><span>City council</span><b>{stats.council}/100</b></div>
+                <div className="flex justify-between"><span>Hospitals</span><b>{stats.health}/100</b></div>
+              </div>
+            </div>
+          </aside>
+
+          <section className="space-y-5">
+            <div className="relative min-h-[500px] overflow-hidden rounded-3xl border border-stone-200 bg-[#dfe8e2] shadow-sm">
+              <div className="absolute inset-0 opacity-60" style={{
+                backgroundImage: 'linear-gradient(30deg, rgba(255,255,255,.7) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.7) 87.5%, rgba(255,255,255,.7)), linear-gradient(150deg, rgba(255,255,255,.7) 12%, transparent 12.5%, transparent 87%, rgba(255,255,255,.7) 87.5%, rgba(255,255,255,.7))',
+                backgroundSize: '80px 140px',
+                backgroundPosition: '0 0, 40px 70px',
+              }} />
+              <div className="absolute left-5 top-5 z-10 rounded-xl border border-white/70 bg-white/85 p-3 backdrop-blur">
+                <div className="text-[10px] font-black uppercase tracking-widest text-stone-400">Priority map</div>
+                <div className="mt-1 font-serif text-xl font-bold">Who should be cooled first?</div>
+              </div>
+              {districts.map((d, i) => {
+                const selected = i === selectedDistrict;
+                const risk = Math.round(d.heat * .6 + d.poverty * .25 + d.elderly * .15);
+                const size = 40 + Math.round(risk * .35);
+                return (
+                  <button
+                    key={d.name}
+                    onClick={() => setSelectedDistrict(i)}
+                    className={`absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white shadow-xl transition hover:scale-110 ${selected ? 'ring-4 ring-orange-400/60' : ''}`}
+                    style={{
+                      left: `${d.x}%`,
+                      top: `${d.y}%`,
+                      width: size,
+                      height: size,
+                      background: risk > 80 ? '#dc2626' : risk > 65 ? '#f59e0b' : '#0f766e',
+                    }}
+                  >
+                    <span className="text-[9px] font-black text-white">{risk}</span>
+                  </button>
+                );
+              })}
+              <div className="absolute bottom-5 left-5 z-10 flex gap-2 rounded-xl border border-white/70 bg-white/85 p-2 text-[9px] font-bold backdrop-blur">
+                <span>🔴 Critical</span><span>🟠 High</span><span>🟢 Lower</span>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-stone-200 bg-white p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-orange-600">Selected district</div>
+                  <h2 className="mt-1 font-serif text-2xl font-black">{district.name}</h2>
+                  <p className="mt-1 text-xs text-stone-500">AI priority score: <b>{weightedRisk.find((x) => x.name === district.name)?.score}</b> / 100</p>
+                </div>
+                <span className="rounded-lg bg-stone-100 px-3 py-2 text-[10px] font-black text-stone-500">CLICK A DISTRICT</span>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {[
+                  ['Heat', district.heat],
+                  ['Poverty', district.poverty],
+                  ['Elderly', district.elderly],
+                  ['Housing', district.housing],
+                  ['Green', district.green],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-xl bg-stone-50 p-3">
+                    <div className="text-[9px] font-bold uppercase tracking-wider text-stone-400">{label}</div>
+                    <div className="mt-1 font-mono text-lg font-black">{value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-orange-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-orange-600">
+                <Sparkles className="size-4" /> {currentEvent.kicker}
+              </div>
+              <h2 className="mt-3 font-serif text-3xl font-black leading-tight">{currentEvent.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-stone-600">{currentEvent.body}</p>
+
+              <div className="mt-5 space-y-2">
+                {currentEvent.choices.map((choice) => {
+                  const disabled = choice.cost > stats.budget;
+                  const selected = lastChoice === choice.id && turn > 1;
+                  return (
+                    <button
+                      key={choice.id}
+                      disabled={disabled}
+                      onClick={() => applyChoice(choice)}
+                      className={`w-full rounded-xl border p-3 text-left transition ${
+                        selected
+                          ? 'border-emerald-300 bg-emerald-50'
+                          : disabled
+                            ? 'cursor-not-allowed border-stone-100 bg-stone-50 opacity-45'
+                            : 'border-stone-200 bg-stone-50 hover:border-slate-900 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex gap-3">
+                        <span className="text-xl">{choice.icon}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-black">{choice.title}</span>
+                            <span className="shrink-0 font-mono text-[10px] font-black text-orange-700">
+                              {choice.cost === 0 ? 'FREE' : choice.cost < 0 ? `+${money(choice.cost)}` : `-${money(choice.cost)}`}
+                            </span>
+                          </span>
+                          <span className="mt-1 block text-[10px] leading-4 text-stone-500">{choice.description}</span>
+                          <span className="mt-2 inline-block rounded bg-white px-1.5 py-1 text-[8px] font-black tracking-wider text-stone-400">{choice.tag}</span>
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-stone-200 bg-white p-4">
+              <div className="text-[10px] font-black uppercase tracking-widest text-stone-400">Decision log</div>
+              <div className="mt-3 space-y-2">
+                {log.length === 0 ? (
+                  <p className="text-xs text-stone-400">Your first decision will appear here.</p>
+                ) : (
+                  log.map((item) => (
+                    <div key={item} className="flex gap-2 text-[10px] leading-4 text-stone-600">
+                      <Check className="mt-0.5 size-3 shrink-0 text-emerald-600" /> {item}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-950 p-4 text-white">
+              <div className="flex items-center gap-2 text-xs font-bold"><BrainCircuit className="size-4 text-sky-300" /> AI advisory note</div>
+              <p className="mt-3 text-[11px] leading-5 text-slate-300">
+                The model can structure evidence, but the weights are political choices. If you override the ranking, the city will remember.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
 }
