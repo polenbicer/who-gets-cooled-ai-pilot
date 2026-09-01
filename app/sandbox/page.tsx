@@ -16,7 +16,6 @@ import {
   Sparkles,
   Check,
   Lock,
-  ChevronDown,
   Activity,
   Layers,
   Crosshair,
@@ -36,8 +35,7 @@ type District = {
   housing: number;
   green: number;
   population: string;
-  x: number; // percentage map overlay
-  y: number;
+  polygon: [number, number][];
 };
 
 type Choice = {
@@ -76,12 +74,120 @@ const CITY_DATA: Record<CityKey, {
     center: [41.0500, 28.9600],
     zoom: 11,
     districts: [
-      { name: "Bağcılar", score: 96, lat: 41.0400, lng: 28.8475, description: "Dense concrete core with minimal green buffers and critical summer thermal traps.", heat: 96, poverty: 84, elderly: 27, housing: 91, green: 14, population: "742K", x: 26, y: 34 },
-      { name: "Esenler", score: 91, lat: 41.0500, lng: 28.8850, description: "High residential density adjacent to major highways; severe urban heat island exposure.", heat: 91, poverty: 81, elderly: 30, housing: 88, green: 18, population: "445K", x: 38, y: 36 },
-      { name: "Fatih", score: 93, lat: 41.0182, lng: 28.9437, description: "Historic peninsula with low canopy, intense tourist/transit load and vulnerable aging stock.", heat: 93, poverty: 69, elderly: 44, housing: 86, green: 16, population: "368K", x: 51, y: 40 },
-      { name: "Kadıköy", score: 74, lat: 40.9910, lng: 29.0270, description: "High coastal elderly demographics, dense mid-rise apartments and rising nighttime surface heat.", heat: 78, poverty: 48, elderly: 43, housing: 74, green: 39, population: "482K", x: 55, y: 62 },
-      { name: "Üsküdar", score: 67, lat: 41.0250, lng: 29.0550, description: "Steep topography and mixed canopy; pockets of elderly vulnerability in inner neighborhoods.", heat: 70, poverty: 45, elderly: 46, housing: 67, green: 48, population: "525K", x: 59, y: 46 },
-      { name: "Northern Belt", score: 39, lat: 41.1680, lng: 29.0550, description: "Forested northern reservoir perimeter with low surface temperatures and high tree canopy.", heat: 42, poverty: 32, elderly: 25, housing: 38, green: 86, population: "180K", x: 49, y: 19 },
+      {
+        name: "Bağcılar",
+        score: 96,
+        lat: 41.0400,
+        lng: 28.8475,
+        description: "Dense concrete core with minimal green buffers and critical summer thermal traps.",
+        heat: 96,
+        poverty: 84,
+        elderly: 27,
+        housing: 91,
+        green: 14,
+        population: "742K",
+        polygon: [
+          [41.065, 28.815],
+          [41.060, 28.875],
+          [41.020, 28.865],
+          [41.025, 28.810],
+        ],
+      },
+      {
+        name: "Esenler",
+        score: 91,
+        lat: 41.0500,
+        lng: 28.8850,
+        description: "High residential density adjacent to major highways; severe urban heat island exposure.",
+        heat: 91,
+        poverty: 81,
+        elderly: 30,
+        housing: 88,
+        green: 18,
+        population: "445K",
+        polygon: [
+          [41.075, 28.870],
+          [41.070, 28.910],
+          [41.030, 28.900],
+          [41.035, 28.860],
+        ],
+      },
+      {
+        name: "Fatih",
+        score: 93,
+        lat: 41.0182,
+        lng: 28.9437,
+        description: "Historic peninsula with low canopy, intense transit load and vulnerable aging housing.",
+        heat: 93,
+        poverty: 69,
+        elderly: 44,
+        housing: 86,
+        green: 16,
+        population: "368K",
+        polygon: [
+          [41.035, 28.925],
+          [41.030, 28.985],
+          [40.995, 28.975],
+          [41.000, 28.920],
+        ],
+      },
+      {
+        name: "Kadıköy",
+        score: 74,
+        lat: 40.9910,
+        lng: 29.0270,
+        description: "High coastal elderly demographics, dense mid-rise apartments and rising nighttime heat.",
+        heat: 78,
+        poverty: 48,
+        elderly: 43,
+        housing: 74,
+        green: 39,
+        population: "482K",
+        polygon: [
+          [41.010, 29.010],
+          [41.005, 29.075],
+          [40.965, 29.085],
+          [40.960, 29.020],
+        ],
+      },
+      {
+        name: "Üsküdar",
+        score: 67,
+        lat: 41.0250,
+        lng: 29.0550,
+        description: "Steep topography and mixed canopy; pockets of elderly vulnerability in inner neighborhoods.",
+        heat: 70,
+        poverty: 45,
+        elderly: 46,
+        housing: 67,
+        green: 48,
+        population: "525K",
+        polygon: [
+          [41.060, 29.030],
+          [41.055, 29.095],
+          [41.005, 29.085],
+          [41.010, 29.025],
+        ],
+      },
+      {
+        name: "Northern Belt",
+        score: 39,
+        lat: 41.1680,
+        lng: 29.0550,
+        description: "Forested northern reservoir perimeter with low surface temperatures and high canopy.",
+        heat: 42,
+        poverty: 32,
+        elderly: 25,
+        housing: 38,
+        green: 86,
+        population: "180K",
+        polygon: [
+          [41.210, 28.950],
+          [41.200, 29.150],
+          [41.130, 29.130],
+          [41.140, 28.970],
+        ],
+      },
     ],
   },
   Brussels: {
@@ -91,12 +197,120 @@ const CITY_DATA: Record<CityKey, {
     center: [50.8450, 4.3600],
     zoom: 12,
     districts: [
-      { name: "Molenbeek", score: 88, lat: 50.8546, lng: 4.3340, description: "Dense housing along the canal corridor with severe lack of tree canopy.", heat: 91, poverty: 86, elderly: 34, housing: 89, green: 22, population: "98K", x: 34, y: 38 },
-      { name: "Marolles", score: 88, lat: 50.8385, lng: 4.3468, description: "Historic central core with heavy impervious surfaces and low-income housing.", heat: 88, poverty: 79, elderly: 42, housing: 76, green: 27, population: "42K", x: 48, y: 47 },
-      { name: "Saint-Josse", score: 90, lat: 50.8500, lng: 4.3700, description: "Extreme density and thermal traps in compact pre-war blocks.", heat: 90, poverty: 86, elderly: 29, housing: 81, green: 20, population: "28K", x: 60, y: 34 },
-      { name: "Ixelles", score: 75, lat: 50.8242, lng: 4.3601, description: "Dense pavement around Flagey with high student and elderly concentration.", heat: 79, poverty: 64, elderly: 39, housing: 77, green: 38, population: "87K", x: 57, y: 60 },
-      { name: "Châtelain", score: 52, lat: 50.8200, lng: 4.3580, description: "Affluent residential neighborhood with private courtyard vegetation.", heat: 58, poverty: 32, elderly: 28, housing: 50, green: 55, population: "34K", x: 44, y: 66 },
-      { name: "Vivier d'Oie", score: 36, lat: 50.7892, lng: 4.3755, description: "Bordering Sonian Forest; extensive canopy cover and minimal surface thermal stress.", heat: 40, poverty: 27, elderly: 44, housing: 49, green: 81, population: "22K", x: 68, y: 80 },
+      {
+        name: "Molenbeek",
+        score: 88,
+        lat: 50.8546,
+        lng: 4.3340,
+        description: "Dense housing along the canal corridor with severe lack of tree canopy.",
+        heat: 91,
+        poverty: 86,
+        elderly: 34,
+        housing: 89,
+        green: 22,
+        population: "98K",
+        polygon: [
+          [50.868, 4.310],
+          [50.865, 4.350],
+          [50.840, 4.340],
+          [50.845, 4.305],
+        ],
+      },
+      {
+        name: "Marolles",
+        score: 88,
+        lat: 50.8385,
+        lng: 4.3468,
+        description: "Historic central core with heavy impervious surfaces and low-income housing.",
+        heat: 88,
+        poverty: 79,
+        elderly: 42,
+        housing: 76,
+        green: 27,
+        population: "42K",
+        polygon: [
+          [50.848, 4.335],
+          [50.845, 4.360],
+          [50.830, 4.355],
+          [50.832, 4.330],
+        ],
+      },
+      {
+        name: "Saint-Josse",
+        score: 90,
+        lat: 50.8500,
+        lng: 4.3700,
+        description: "Extreme density and thermal traps in compact pre-war blocks.",
+        heat: 90,
+        poverty: 86,
+        elderly: 29,
+        housing: 81,
+        green: 20,
+        population: "28K",
+        polygon: [
+          [50.860, 4.360],
+          [50.858, 4.385],
+          [50.845, 4.380],
+          [50.847, 4.355],
+        ],
+      },
+      {
+        name: "Ixelles",
+        score: 75,
+        lat: 50.8242,
+        lng: 4.3601,
+        description: "Dense pavement around Flagey with high student and elderly concentration.",
+        heat: 79,
+        poverty: 64,
+        elderly: 39,
+        housing: 77,
+        green: 38,
+        population: "87K",
+        polygon: [
+          [50.838, 4.350],
+          [50.835, 4.385],
+          [50.810, 4.380],
+          [50.812, 4.345],
+        ],
+      },
+      {
+        name: "Châtelain",
+        score: 52,
+        lat: 50.8200,
+        lng: 4.3580,
+        description: "Affluent residential neighborhood with private courtyard vegetation.",
+        heat: 58,
+        poverty: 32,
+        elderly: 28,
+        housing: 50,
+        green: 55,
+        population: "34K",
+        polygon: [
+          [50.828, 4.345],
+          [50.825, 4.370],
+          [50.808, 4.365],
+          [50.810, 4.340],
+        ],
+      },
+      {
+        name: "Vivier d'Oie",
+        score: 36,
+        lat: 50.7892,
+        lng: 4.3755,
+        description: "Bordering Sonian Forest; extensive canopy cover and minimal surface thermal stress.",
+        heat: 40,
+        poverty: 27,
+        elderly: 44,
+        housing: 49,
+        green: 81,
+        population: "22K",
+        polygon: [
+          [50.805, 4.360],
+          [50.800, 4.400],
+          [50.775, 4.390],
+          [50.780, 4.350],
+        ],
+      },
     ],
   },
   Amsterdam: {
@@ -106,12 +320,120 @@ const CITY_DATA: Record<CityKey, {
     center: [52.3600, 4.8900],
     zoom: 12,
     districts: [
-      { name: "Nieuw-West", score: 86, lat: 52.3680, lng: 4.8100, description: "Post-war residential blocks with wide paved plazas and energy poverty.", heat: 89, poverty: 78, elderly: 38, housing: 84, green: 34, population: "160K", x: 28, y: 46 },
-      { name: "Burgwallen", score: 81, lat: 52.3718, lng: 4.8980, description: "Historic masonry core; narrow alleys and high visitor footfall create nocturnal heat traps.", heat: 86, poverty: 65, elderly: 41, housing: 75, green: 20, population: "48K", x: 49, y: 39 },
-      { name: "Zuidoost", score: 82, lat: 52.3145, lng: 4.9542, description: "High-rise social housing clusters near transit nodes.", heat: 86, poverty: 73, elderly: 35, housing: 80, green: 39, population: "90K", x: 74, y: 72 },
-      { name: "Indische Buurt", score: 76, lat: 52.3650, lng: 4.9380, description: "Dense 19th-century fabric in East Amsterdam with elderly isolation.", heat: 76, poverty: 74, elderly: 69, housing: 63, green: 31, population: "32K", x: 67, y: 48 },
-      { name: "Noord", score: 69, lat: 52.3950, lng: 4.9100, description: "Transforming post-industrial waterfront with uneven tree canopy.", heat: 72, poverty: 55, elderly: 40, housing: 68, green: 46, population: "102K", x: 55, y: 22 },
-      { name: "Zuid", score: 38, lat: 52.3380, lng: 4.8720, description: "Affluent district with wide avenues and insulated infrastructure.", heat: 42, poverty: 25, elderly: 47, housing: 46, green: 78, population: "145K", x: 45, y: 68 },
+      {
+        name: "Nieuw-West",
+        score: 86,
+        lat: 52.3680,
+        lng: 4.8100,
+        description: "Post-war residential blocks with wide paved plazas and energy poverty.",
+        heat: 89,
+        poverty: 78,
+        elderly: 38,
+        housing: 84,
+        green: 34,
+        population: "160K",
+        polygon: [
+          [52.385, 4.780],
+          [52.380, 4.840],
+          [52.345, 4.835],
+          [52.350, 4.775],
+        ],
+      },
+      {
+        name: "Burgwallen",
+        score: 81,
+        lat: 52.3718,
+        lng: 4.8980,
+        description: "Historic masonry core; narrow alleys and high visitor footfall create nocturnal heat traps.",
+        heat: 86,
+        poverty: 65,
+        elderly: 41,
+        housing: 75,
+        green: 20,
+        population: "48K",
+        polygon: [
+          [52.380, 4.885],
+          [52.378, 4.915],
+          [52.360, 4.910],
+          [52.362, 4.880],
+        ],
+      },
+      {
+        name: "Zuidoost",
+        score: 82,
+        lat: 52.3145,
+        lng: 4.9542,
+        description: "High-rise social housing clusters near transit nodes.",
+        heat: 86,
+        poverty: 73,
+        elderly: 35,
+        housing: 80,
+        green: 39,
+        population: "90K",
+        polygon: [
+          [52.330, 4.930],
+          [52.325, 4.985],
+          [52.295, 4.975],
+          [52.300, 4.920],
+        ],
+      },
+      {
+        name: "Indische Buurt",
+        score: 76,
+        lat: 52.3650,
+        lng: 4.9380,
+        description: "Dense 19th-century fabric in East Amsterdam with elderly isolation.",
+        heat: 76,
+        poverty: 74,
+        elderly: 69,
+        housing: 63,
+        green: 31,
+        population: "32K",
+        polygon: [
+          [52.375, 4.925],
+          [52.372, 4.955],
+          [52.355, 4.950],
+          [52.358, 4.920],
+        ],
+      },
+      {
+        name: "Noord",
+        score: 69,
+        lat: 52.3950,
+        lng: 4.9100,
+        description: "Transforming post-industrial waterfront with uneven tree canopy.",
+        heat: 72,
+        poverty: 55,
+        elderly: 40,
+        housing: 68,
+        green: 46,
+        population: "102K",
+        polygon: [
+          [52.415, 4.880],
+          [52.410, 4.945],
+          [52.385, 4.935],
+          [52.390, 4.870],
+        ],
+      },
+      {
+        name: "Zuid",
+        score: 38,
+        lat: 52.3380,
+        lng: 4.8720,
+        description: "Affluent district with wide avenues and insulated infrastructure.",
+        heat: 42,
+        poverty: 25,
+        elderly: 47,
+        housing: 46,
+        green: 78,
+        population: "145K",
+        polygon: [
+          [52.355, 4.850],
+          [52.350, 4.900],
+          [52.320, 4.890],
+          [52.325, 4.840],
+        ],
+      },
     ],
   },
   Izmir: {
@@ -121,12 +443,120 @@ const CITY_DATA: Record<CityKey, {
     center: [38.4200, 27.1400],
     zoom: 12,
     districts: [
-      { name: "Konak", score: 94, lat: 38.4189, lng: 27.1287, description: "Dense commercial and historic waterfront core with heavy asphalt paving.", heat: 94, poverty: 68, elderly: 61, housing: 72, green: 21, population: "344K", x: 44, y: 48 },
-      { name: "Buca", score: 92, lat: 38.3850, lng: 27.1750, description: "Fast-growing hillside district with dense apartment corridors.", heat: 94, poverty: 78, elderly: 34, housing: 87, green: 23, population: "522K", x: 58, y: 65 },
-      { name: "Karabağlar", score: 90, lat: 38.3750, lng: 27.1250, description: "High residential density, informal expansions and low shade buffers.", heat: 92, poverty: 81, elderly: 39, housing: 86, green: 21, population: "478K", x: 40, y: 68 },
-      { name: "Bornova", score: 78, lat: 38.4650, lng: 27.2180, description: "Inland valley basin with high daytime thermal load.", heat: 81, poverty: 58, elderly: 35, housing: 74, green: 34, population: "450K", x: 67, y: 42 },
-      { name: "Karşıyaka", score: 61, lat: 38.4590, lng: 27.1100, description: "Coastal waterfront district with cooling breeze but elderly demographics.", heat: 66, poverty: 43, elderly: 46, housing: 63, green: 47, population: "350K", x: 46, y: 28 },
-      { name: "Urla Belt", score: 35, lat: 38.3220, lng: 26.7650, description: "Peripheral coastal green corridor with olive groves and natural ventilation.", heat: 39, poverty: 29, elderly: 42, housing: 41, green: 82, population: "74K", x: 22, y: 78 },
+      {
+        name: "Konak",
+        score: 94,
+        lat: 38.4189,
+        lng: 27.1287,
+        description: "Dense commercial and historic waterfront core with heavy asphalt paving.",
+        heat: 94,
+        poverty: 68,
+        elderly: 61,
+        housing: 72,
+        green: 21,
+        population: "344K",
+        polygon: [
+          [38.435, 27.110],
+          [38.430, 27.155],
+          [38.405, 27.150],
+          [38.410, 27.105],
+        ],
+      },
+      {
+        name: "Buca",
+        score: 92,
+        lat: 38.3850,
+        lng: 27.1750,
+        description: "Fast-growing hillside district with dense apartment corridors.",
+        heat: 94,
+        poverty: 78,
+        elderly: 34,
+        housing: 87,
+        green: 23,
+        population: "522K",
+        polygon: [
+          [38.405, 27.155],
+          [38.400, 27.200],
+          [38.365, 27.190],
+          [38.370, 27.145],
+        ],
+      },
+      {
+        name: "Karabağlar",
+        score: 90,
+        lat: 38.3750,
+        lng: 27.1250,
+        description: "High residential density, informal expansions and low shade buffers.",
+        heat: 92,
+        poverty: 81,
+        elderly: 39,
+        housing: 86,
+        green: 21,
+        population: "478K",
+        polygon: [
+          [38.395, 27.100],
+          [38.390, 27.145],
+          [38.355, 27.140],
+          [38.360, 27.095],
+        ],
+      },
+      {
+        name: "Bornova",
+        score: 78,
+        lat: 38.4650,
+        lng: 27.2180,
+        description: "Inland valley basin with high daytime thermal load.",
+        heat: 81,
+        poverty: 58,
+        elderly: 35,
+        housing: 74,
+        green: 34,
+        population: "450K",
+        polygon: [
+          [38.485, 27.195],
+          [38.480, 27.245],
+          [38.445, 27.235],
+          [38.450, 27.185],
+        ],
+      },
+      {
+        name: "Karşıyaka",
+        score: 61,
+        lat: 38.4590,
+        lng: 27.1100,
+        description: "Coastal waterfront district with cooling breeze but elderly demographics.",
+        heat: 66,
+        poverty: 43,
+        elderly: 46,
+        housing: 63,
+        green: 47,
+        population: "350K",
+        polygon: [
+          [38.475, 27.085],
+          [38.470, 27.135],
+          [38.440, 27.130],
+          [38.445, 27.080],
+        ],
+      },
+      {
+        name: "Urla Belt",
+        score: 35,
+        lat: 38.3220,
+        lng: 26.7650,
+        description: "Peripheral coastal green corridor with olive groves and natural ventilation.",
+        heat: 39,
+        poverty: 29,
+        elderly: 42,
+        housing: 41,
+        green: 82,
+        population: "74K",
+        polygon: [
+          [38.350, 26.730],
+          [38.345, 26.800],
+          [38.295, 26.790],
+          [38.300, 26.720],
+        ],
+      },
     ],
   },
 };
@@ -300,7 +730,6 @@ export default function MayorGamePage() {
   ]);
   const [showIntroModal, setShowIntroModal] = useState(true);
   const [showEndModal, setShowEndModal] = useState(false);
-  const [cityDropdown, setCityDropdown] = useState(false);
 
   const cityObj = CITY_DATA[city];
   const activeDistrict = cityObj.districts[selectedDistrictIndex] || cityObj.districts[0];
@@ -317,7 +746,6 @@ export default function MayorGamePage() {
   const handleCityChange = (newCity: CityKey) => {
     setCity(newCity);
     setSelectedDistrictIndex(0);
-    setCityDropdown(false);
   };
 
   const chooseOption = (index: number) => {
@@ -372,10 +800,117 @@ export default function MayorGamePage() {
     setShowIntroModal(false);
   };
 
+  // Coğrafi Kuşbakışı Uydu Haritası (Esri Satellite)
+  const mapHtml = useMemo(() => {
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body, html { margin:0; padding:0; height:100%; width:100%; background:#070f17; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    #map { height:100%; width:100%; background:#070f17; }
+    .custom-pin {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .pin-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.8);
+      transition: transform 0.2s ease;
+    }
+    .pin-circle:hover { transform: scale(1.18); }
+    .pin-label {
+      background: rgba(15,23,42,0.9);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 5px;
+      margin-bottom: 4px;
+      border: 1px solid rgba(255,255,255,0.25);
+      white-space: nowrap;
+      text-shadow: 0 1px 3px #000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .leaflet-control-attribution { display: none; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    const map = L.map('map', { zoomControl: false }).setView([${cityObj.center[0]}, ${cityObj.center[1]}], ${cityObj.zoom});
+    
+    // Yüksek Çözünürlüklü Gerçek Kuşbakışı Uydu Katmanı
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18
+    }).addTo(map);
+
+    const districts = ${JSON.stringify(cityObj.districts)};
+
+    districts.forEach((d, idx) => {
+      const color = d.score >= 85 ? '#ef4444' : d.score >= 65 ? '#f97316' : d.score >= 50 ? '#eab308' : '#22c55e';
+      
+      // Isı Adası Poligon Katmanı
+      if (d.polygon && d.polygon.length > 0) {
+        L.polygon(d.polygon, {
+          color: color,
+          weight: 2,
+          fillColor: color,
+          fillOpacity: 0.45,
+          dashArray: '3, 4'
+        }).addTo(map);
+      }
+
+      // Skor Pini
+      const icon = L.divIcon({
+        className: 'custom-pin-container',
+        html: '<div class="custom-pin">' +
+                '<div class="pin-label">' + d.name + '</div>' +
+                '<div class="pin-circle" style="background:' + color + ';">' + d.score + '</div>' +
+              '</div>',
+        iconSize: [60, 60],
+        iconAnchor: [30, 48]
+      });
+
+      const marker = L.marker([d.lat, d.lng], { icon: icon }).addTo(map);
+      marker.on('click', () => {
+        window.parent.postMessage({ type: 'SELECT_DISTRICT', index: idx }, '*');
+      });
+    });
+  </script>
+</body>
+</html>`;
+  }, [cityObj]);
+
+  useEffect(() => {
+    const handleMsg = (e: MessageEvent) => {
+      if (e.data && e.data.type === "SELECT_DISTRICT") {
+        setSelectedDistrictIndex(e.data.index);
+      }
+    };
+    window.addEventListener("message", handleMsg);
+    return () => window.removeEventListener("message", handleMsg);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#060a0f] text-slate-100 font-sans antialiased select-none flex flex-col justify-between overflow-x-hidden">
       
-      {/* INTRO MODAL */}
+      {/* INTRO MODAL (ALL ENGLISH) */}
       {showIntroModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-2xl w-full bg-[#0d1520] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl relative">
@@ -388,19 +923,19 @@ export default function MayorGamePage() {
             </h1>
             <div className="mt-4 space-y-3 text-sm text-slate-300 leading-relaxed">
               <p>
-                Hoş geldiniz Sayın Başkan. Şehriniz rekor sıcak hava dalgalarının, artan kiracı baskılarının ve yapay zeka karar algoritmalarının kıskacında.
+                Welcome, Mayor. Your metropolis is gripped by dangerous heatwaves, tenant rent pressures, and automated allocation algorithms.
               </p>
-              <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2 text-xs">
+              <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5 text-xs">
                 <div className="flex items-start gap-2">
-                  <span className="font-bold text-emerald-400 shrink-0">💰 Bütçe &amp; Oyun Sonu:</span>
+                  <span className="font-bold text-emerald-400 shrink-0">💰 Budget &amp; Game End:</span>
                   <span>
-                    Oyunu tamamlayabilmek ve nasıl bir belediye başkanı olduğunuzu görebilmek için <strong>tüm bütçenizi (Budget)</strong> stratejik olarak harcamanız ya da <strong>12 turu</strong> tamamlamanız gerekir. Bütçeniz iflasa düşerse veya halkın güveni çökerse görevden alınırsınız!
+                    To complete your term and evaluate your mayoral legacy, you must strategically utilize your <strong>municipal budget</strong> across <strong>12 turns</strong>. Depleting funds without achieving resilience leads to bankruptcy and election defeat!
                   </span>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="font-bold text-indigo-400 shrink-0">⚖️ Algoritmik Adalet:</span>
+                  <span className="font-bold text-indigo-400 shrink-0">⚖️ Spatial Justice:</span>
                   <span>
-                    Sadece zengin merkezleri soğutup yoksul mahalleleri unutursanız <em>Green Gentrification</em> patlar, halk sokaklara dökülür.
+                    Cooling only affluent centers while ignoring marginalized districts will trigger <em>Green Gentrification</em> and widespread social unrest.
                   </span>
                 </div>
               </div>
@@ -420,7 +955,7 @@ export default function MayorGamePage() {
         </div>
       )}
 
-      {/* GAME OVER MODAL */}
+      {/* GAME OVER MODAL (ALL ENGLISH) */}
       {showEndModal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-2xl w-full bg-[#0d1520] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl text-center">
@@ -428,8 +963,8 @@ export default function MayorGamePage() {
             <h2 className="text-3xl font-black text-white">Mayoral Term Concluded</h2>
             <p className="text-sm text-slate-300 mt-2 max-w-md mx-auto">
               {stats.budget <= 0
-                ? "Bütçeniz tamamen tükendi! Şehir kaynaklarını sonuna kadar kullandınız. Şimdi karneniz oylanıyor."
-                : "12 turluk kriz dönemini başarıyla yönettiniz. Şehrin geleceğine bıraktığınız miras tescillendi."}
+                ? "Your municipal treasury is fully depleted! The city's governance and climate record are now judged by voters."
+                : "You successfully steered the metropolis through the 12-turn climate crisis. Your administrative legacy is certified."}
             </p>
 
             <div className="grid grid-cols-3 gap-3 my-6 text-left">
@@ -448,10 +983,10 @@ export default function MayorGamePage() {
             </div>
 
             <div className="p-4 rounded-xl bg-orange-950/20 border border-orange-500/30 text-xs text-orange-200 mb-6">
-              <strong>Mirasınız (Your Legacy): </strong>
+              <strong>Your Mayoral Legacy: </strong>
               {stats.justice >= 65
-                ? "Adalet Şampiyonu Başkan (Social Justice Mayor) - Düşük gelirli mahalleleri kentsel dönüşüm rantına kurban etmediniz."
-                : "Teknokratik İklim Yöneticisi (Technocratic Mayor) - Şehri soğuttunuz fakat sosyo-mekansal eşitsizlikler derinleşti."}
+                ? "Social Justice Champion — You prioritized low-income frontline communities and prevented green gentrification."
+                : "Technocratic Adaptation Leader — The city reduced heat stress, but socio-spatial disparities widened across marginalized sectors."}
             </div>
 
             <div className="flex justify-center gap-3">
@@ -472,7 +1007,7 @@ export default function MayorGamePage() {
         </div>
       )}
 
-      {/* TOP HEADER */}
+      {/* TOP STATS BAR */}
       <header className="h-16 border-b border-slate-800/90 bg-[#090e15] px-4 md:px-6 flex items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-4 min-w-max">
           <div>
@@ -556,41 +1091,42 @@ export default function MayorGamePage() {
       {/* COCKPIT WORKSPACE */}
       <div className="flex-1 max-w-[1700px] w-full mx-auto p-3 md:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
         
-        {/* LEFT COLUMN */}
+        {/* LEFT COLUMN: CITY SELECTOR & DISTRICT LIST */}
         <div className="lg:col-span-3 space-y-3">
-          <div className="bg-[#0b1219] border border-slate-800 rounded-2xl p-3.5 relative overflow-hidden shadow-xl">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs uppercase font-bold tracking-wider text-slate-400">Urban Context</div>
-              <div className="relative">
-                <button
-                  onClick={() => setCityDropdown(!cityDropdown)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-xs font-bold text-white hover:bg-slate-700 cursor-pointer"
-                >
-                  <span>{cityObj.flag} {city}</span>
-                  <ChevronDown className="size-3" />
-                </button>
-                {cityDropdown && (
-                  <div className="absolute right-0 top-8 z-30 w-36 bg-slate-900 border border-slate-700 rounded-lg p-1 shadow-2xl space-y-0.5">
-                    {(Object.keys(CITY_DATA) as CityKey[]).map((cKey) => (
-                      <button
-                        key={cKey}
-                        onClick={() => handleCityChange(cKey)}
-                        className="w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded text-slate-200 hover:bg-slate-800 hover:text-white flex items-center gap-2 cursor-pointer"
-                      >
-                        <span>{CITY_DATA[cKey].flag}</span>
-                        <span>{cKey}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+          
+          {/* CITY SELECTOR */}
+          <div className="bg-[#0b1219] border border-slate-800 rounded-2xl p-3.5 shadow-xl">
+            <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-2">
+              Select City Context
             </div>
-            <div className="text-lg font-black text-white flex items-center gap-2">
-              <span>{city.toUpperCase()}</span>
-              <span className="text-xs font-normal text-slate-400">{cityObj.subtitle}</span>
+            <div className="grid grid-cols-2 gap-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+              {(Object.keys(CITY_DATA) as CityKey[]).map((cKey) => {
+                const active = city === cKey;
+                return (
+                  <button
+                    key={cKey}
+                    onClick={() => handleCityChange(cKey)}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      active
+                        ? "bg-[#c2410c] text-white shadow-md ring-1 ring-orange-400"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <span>{CITY_DATA[cKey].flag}</span>
+                    <span className="truncate">{cKey}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-slate-800/80">
+              <div className="text-sm font-black text-white flex items-center gap-2">
+                <span>{city.toUpperCase()}</span>
+                <span className="text-[11px] font-normal text-slate-400 truncate">{cityObj.subtitle}</span>
+              </div>
             </div>
           </div>
 
+          {/* District Risk Overview */}
           <div className="bg-[#0b1219] border border-slate-800 rounded-2xl p-3.5 shadow-xl">
             <div className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
               <span>District Risk Overview</span>
@@ -606,7 +1142,7 @@ export default function MayorGamePage() {
                     onClick={() => setSelectedDistrictIndex(idx)}
                     className={`w-full flex items-center justify-between p-2 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-slate-800 border-orange-500 shadow-md"
+                        ? "bg-slate-800 border-orange-500 shadow-md ring-1 ring-orange-500"
                         : "bg-slate-900/60 border-slate-800/80 hover:bg-slate-800/50"
                     }`}
                   >
@@ -631,6 +1167,7 @@ export default function MayorGamePage() {
             </div>
           </div>
 
+          {/* AI Priority Suggestion */}
           <div className="bg-gradient-to-br from-[#0c1626] to-[#0a1b20] border border-indigo-900/50 rounded-2xl p-3.5 shadow-xl relative overflow-hidden">
             <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase mb-1">
               <Sparkles className="size-3.5" /> AI Priority Suggestion
@@ -646,6 +1183,7 @@ export default function MayorGamePage() {
             </button>
           </div>
 
+          {/* Stakeholder Mood */}
           <div className="bg-[#0b1219] border border-slate-800 rounded-2xl p-3.5 shadow-xl">
             <div className="text-[10px] uppercase font-extrabold tracking-wider text-slate-400 mb-2">
               Stakeholder Mood
@@ -672,30 +1210,12 @@ export default function MayorGamePage() {
           </div>
         </div>
 
-        {/* MIDDLE COLUMN: HIGH-RES REAL MAP SATELLITE CANVAS */}
+        {/* MIDDLE COLUMN: LEAFLET SATELLITE MAP */}
         <div className="lg:col-span-6 relative">
-          <div className="relative h-[620px] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-[#0b151f]">
+          <div className="relative h-[620px] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-[#070f17]">
             
-            {/* Real Satellite Background Layer */}
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-all duration-700 filter brightness-90 contrast-110"
-              style={{
-                backgroundImage: city === "Istanbul" 
-                  ? "url('https://images.unsplash.com/photo-1527838832700-5059252407fa?q=80&w=1600&auto=format&fit=crop')"
-                  : city === "Brussels"
-                  ? "url('https://images.unsplash.com/photo-1572979203493-66f8e79e60fb?q=80&w=1600&auto=format&fit=crop')"
-                  : city === "Amsterdam"
-                  ? "url('https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?q=80&w=1600&auto=format&fit=crop')"
-                  : "url('https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?q=80&w=1600&auto=format&fit=crop')",
-              }}
-            >
-              {/* Thermal Heatmap & Topographic Grid Shader Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#060a0f] via-slate-950/40 to-transparent" />
-              <div className="absolute inset-0 bg-[radial-gradient(#ef444433_1px,transparent_1px)] [background-size:16px_16px] opacity-40" />
-            </div>
-
             {/* Risk Legend */}
-            <div className="absolute top-4 left-4 z-20 bg-slate-950/85 backdrop-blur-md border border-slate-800 px-3 py-2 rounded-xl text-[10px] font-bold flex items-center gap-3">
+            <div className="absolute top-4 left-4 z-20 bg-slate-950/90 backdrop-blur-md border border-slate-800 px-3 py-2 rounded-xl text-[10px] font-bold flex items-center gap-3">
               <span className="text-slate-400 uppercase tracking-wider">Risk Level:</span>
               <span className="flex items-center gap-1 text-emerald-400"><i className="size-2 rounded-full bg-emerald-500" /> Low</span>
               <span className="flex items-center gap-1 text-amber-400"><i className="size-2 rounded-full bg-amber-500" /> Medium</span>
@@ -703,32 +1223,13 @@ export default function MayorGamePage() {
               <span className="flex items-center gap-1 text-rose-400"><i className="size-2 rounded-full bg-rose-500" /> Very High</span>
             </div>
 
-            {/* Interactive Pins on Satellite Background */}
-            {cityObj.districts.map((d, idx) => {
-              const isSelected = selectedDistrictIndex === idx;
-              const color = toneColor(tone(d.score));
-
-              return (
-                <div
-                  key={d.name}
-                  onClick={() => setSelectedDistrictIndex(idx)}
-                  className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center cursor-pointer group transition-all duration-300"
-                  style={{ left: `${d.x}%`, top: `${d.y}%` }}
-                >
-                  <div className="bg-slate-950/90 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/20 shadow-md mb-1 group-hover:scale-110 transition-transform">
-                    {d.name}
-                  </div>
-                  <div
-                    className={`size-11 rounded-full border-2 border-white flex items-center justify-center text-xs font-black text-white shadow-2xl transition-transform ${
-                      isSelected ? "scale-125 ring-4 ring-orange-400 shadow-orange-500/50" : "group-hover:scale-110"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  >
-                    {d.score}
-                  </div>
-                </div>
-              );
-            })}
+            {/* Satellite Map iframe */}
+            <iframe
+              key={city}
+              title="Satellite Simulation Map"
+              srcDoc={mapHtml}
+              className="w-full h-full border-0"
+            />
 
             {/* Selected District Overlay Box */}
             <div className="absolute bottom-4 left-4 right-4 z-20 bg-slate-950/90 backdrop-blur-md border border-slate-800 p-4 rounded-2xl shadow-2xl">
