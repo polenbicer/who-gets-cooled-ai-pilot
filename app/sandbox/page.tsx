@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,13 +12,10 @@ import {
   HeartHandshake,
   Landmark,
   Bot,
-  Settings,
   Sparkles,
   Check,
   Lock,
   Activity,
-  Layers,
-  Crosshair,
 } from "lucide-react";
 
 type CityKey = "Brussels" | "Amsterdam" | "Istanbul" | "Izmir";
@@ -800,7 +797,6 @@ export default function MayorGamePage() {
     setShowIntroModal(false);
   };
 
-  // Coğrafi Kuşbakışı Uydu Haritası (Esri Satellite)
   const mapHtml = useMemo(() => {
     return `<!DOCTYPE html>
 <html>
@@ -855,7 +851,6 @@ export default function MayorGamePage() {
   <script>
     const map = L.map('map', { zoomControl: false }).setView([${cityObj.center[0]}, ${cityObj.center[1]}], ${cityObj.zoom});
     
-    // Yüksek Çözünürlüklü Gerçek Kuşbakışı Uydu Katmanı
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 18
     }).addTo(map);
@@ -865,7 +860,6 @@ export default function MayorGamePage() {
     districts.forEach((d, idx) => {
       const color = d.score >= 85 ? '#ef4444' : d.score >= 65 ? '#f97316' : d.score >= 50 ? '#eab308' : '#22c55e';
       
-      // Isı Adası Poligon Katmanı
       if (d.polygon && d.polygon.length > 0) {
         L.polygon(d.polygon, {
           color: color,
@@ -876,7 +870,6 @@ export default function MayorGamePage() {
         }).addTo(map);
       }
 
-      // Skor Pini
       const icon = L.divIcon({
         className: 'custom-pin-container',
         html: '<div class="custom-pin">' +
@@ -887,30 +880,17 @@ export default function MayorGamePage() {
         iconAnchor: [30, 48]
       });
 
-      const marker = L.marker([d.lat, d.lng], { icon: icon }).addTo(map);
-      marker.on('click', () => {
-        window.parent.postMessage({ type: 'SELECT_DISTRICT', index: idx }, '*');
-      });
+      L.marker([d.lat, d.lng], { icon: icon }).addTo(map);
     });
   </script>
 </body>
 </html>`;
   }, [cityObj]);
 
-  useEffect(() => {
-    const handleMsg = (e: MessageEvent) => {
-      if (e.data && e.data.type === "SELECT_DISTRICT") {
-        setSelectedDistrictIndex(e.data.index);
-      }
-    };
-    window.addEventListener("message", handleMsg);
-    return () => window.removeEventListener("message", handleMsg);
-  }, []);
-
   return (
     <div className="min-h-screen bg-[#060a0f] text-slate-100 font-sans antialiased select-none flex flex-col justify-between overflow-x-hidden">
       
-      {/* INTRO MODAL (ALL ENGLISH) */}
+      {/* INTRO MODAL */}
       {showIntroModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-2xl w-full bg-[#0d1520] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl relative">
@@ -955,7 +935,7 @@ export default function MayorGamePage() {
         </div>
       )}
 
-      {/* GAME OVER MODAL (ALL ENGLISH) */}
+      {/* GAME OVER MODAL */}
       {showEndModal && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
           <div className="max-w-2xl w-full bg-[#0d1520] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl text-center">
@@ -1007,9 +987,16 @@ export default function MayorGamePage() {
         </div>
       )}
 
-      {/* TOP STATS BAR */}
+      {/* TOP STATS BAR WITH BACK TO DASHBOARD BUTTON */}
       <header className="h-16 border-b border-slate-800/90 bg-[#090e15] px-4 md:px-6 flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-4 min-w-max">
+        <div className="flex items-center gap-3 min-w-max">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all border border-slate-700"
+          >
+            <ArrowLeft className="size-3.5" /> Back to Dashboard
+          </Link>
+          <div className="h-6 w-px bg-slate-800" />
           <div>
             <div className="text-[11px] font-black uppercase tracking-wider text-slate-200">
               TURN {turn} / 12
@@ -1018,7 +1005,6 @@ export default function MayorGamePage() {
               {EVENT_NAMES[turn - 1]}
             </div>
           </div>
-          <div className="h-8 w-px bg-slate-800" />
         </div>
 
         <div className="hidden lg:flex items-center gap-6">
@@ -1078,13 +1064,6 @@ export default function MayorGamePage() {
           >
             <Bot className="size-3.5" /> AI Advisor
           </button>
-          <Link
-            href="/"
-            className="size-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
-            title="Dashboard"
-          >
-            <Settings className="size-4" />
-          </Link>
         </div>
       </header>
 
@@ -1165,22 +1144,6 @@ export default function MayorGamePage() {
                 );
               })}
             </div>
-          </div>
-
-          {/* AI Priority Suggestion */}
-          <div className="bg-gradient-to-br from-[#0c1626] to-[#0a1b20] border border-indigo-900/50 rounded-2xl p-3.5 shadow-xl relative overflow-hidden">
-            <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase mb-1">
-              <Sparkles className="size-3.5" /> AI Priority Suggestion
-            </div>
-            <p className="text-xs text-slate-300 leading-snug mb-3">
-              Algorithms detect overlapping thermal energy poverty in <strong>{cityObj.districts[0].name}</strong>. Prioritize immediate cooling buffers?
-            </p>
-            <button
-              onClick={() => setSelectedDistrictIndex(0)}
-              className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg transition-all cursor-pointer"
-            >
-              Analyze {cityObj.districts[0].name}
-            </button>
           </div>
 
           {/* Stakeholder Mood */}
@@ -1274,7 +1237,7 @@ export default function MayorGamePage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: EVENT & DECISION CARDS */}
+        {/* RIGHT COLUMN: EVENT & DECISION CARDS WITH PROMINENT NEXT BUTTON */}
         <div className="lg:col-span-3 space-y-3">
           <div className="bg-[#0b1219] border border-orange-500/30 rounded-2xl p-4 shadow-xl">
             
@@ -1309,7 +1272,7 @@ export default function MayorGamePage() {
                     onClick={() => chooseOption(i)}
                     className={`w-full p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       isChosen
-                        ? "bg-indigo-950/80 border-indigo-500 ring-1 ring-indigo-400"
+                        ? "bg-indigo-950/80 border-indigo-500 ring-2 ring-indigo-400"
                         : isMuted
                         ? "opacity-35 bg-slate-900 border-slate-800"
                         : !isAffordable
@@ -1333,12 +1296,28 @@ export default function MayorGamePage() {
               })}
             </div>
 
+            {/* PROMINENT NEXT TURN ACTION BUTTON */}
+            <div className="mt-4 pt-3 border-t border-slate-800">
+              <button
+                onClick={nextTurn}
+                disabled={chosen === null}
+                className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xl ${
+                  chosen !== null
+                    ? "bg-[#c2410c] hover:bg-[#a9370a] text-white animate-pulse cursor-pointer ring-2 ring-orange-400"
+                    : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-50"
+                }`}
+              >
+                <span>{chosen !== null ? "CONFIRM & NEXT TURN" : "SELECT A POLICY TO ADVANCE"}</span>
+                <ArrowRight className="size-4" />
+              </button>
+            </div>
+
             {/* Decision Log */}
             <div className="mt-4 pt-3 border-t border-slate-800">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                 Decision Log
               </div>
-              <div className="space-y-1 max-h-24 overflow-y-auto text-[10px] font-mono text-slate-400">
+              <div className="space-y-1 max-h-20 overflow-y-auto text-[10px] font-mono text-slate-400">
                 {log.map((item, idx) => (
                   <div key={idx} className="truncate">✓ {item}</div>
                 ))}
@@ -1383,8 +1362,8 @@ export default function MayorGamePage() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="h-16 border-t border-slate-800 bg-[#090e15] px-4 md:px-6 flex items-center justify-between gap-4 shrink-0">
+      {/* FOOTER METRICS ONLY */}
+      <footer className="h-14 border-t border-slate-800 bg-[#090e15] px-4 md:px-6 flex items-center justify-between gap-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="text-xl">❤️</div>
           <div>
@@ -1393,27 +1372,14 @@ export default function MayorGamePage() {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-2 text-xs text-slate-300">
+        <div className="flex items-center gap-2 text-xs text-slate-300">
           <span className="size-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">👑</span>
           <span>
             {stats.justice > 65
-              ? "Spatial justice is high. Low-income districts receive fair protection."
-              : "Social equity is strained. Vulnerable communities bear the thermal brunt."}
+              ? "Spatial justice is prioritized. Low-income sectors receive equitable shade and cooling."
+              : "Social equity is strained. Vulnerable communities bear the disproportionate heat burden."}
           </span>
         </div>
-
-        <button
-          onClick={nextTurn}
-          disabled={chosen === null}
-          className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-            chosen !== null
-              ? "bg-[#c2410c] hover:bg-[#a9370a] text-white shadow-lg"
-              : "bg-slate-800 text-slate-500 cursor-not-allowed"
-          }`}
-        >
-          <span>Prepare for Next Turn</span>
-          <ArrowRight className="size-4" />
-        </button>
       </footer>
     </div>
   );
