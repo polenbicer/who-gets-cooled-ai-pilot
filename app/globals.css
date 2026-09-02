@@ -1,7 +1,3 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
-
 :root { --paper:#f3f0e8; --ink:#111; --blue:#1746d1; --orange:#ff5738; --mint:#b5e2d2; --pink:#e9a9d4; }
 * { box-sizing:border-box; }
 html { scroll-behavior:smooth; }
