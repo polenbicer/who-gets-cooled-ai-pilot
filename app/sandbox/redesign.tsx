@@ -42,17 +42,27 @@ type City = {
 type Props = { cityData: Record<string, City>; getChoices: (turn: number) => Choice[] };
 type Decision = { turn: number; title: string };
 const INITIAL: Stats = {
-  budget: 76,
+  budget: 64,
   heat: 78,
   justice: 50,
-  approval: 56,
-  trust: 58,
-  council: 50,
+  approval: 50,
+  trust: 52,
+  council: 48,
   green: 36,
   health: 55,
   lives: 0,
 };
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
+function applyTurnPressure(s: Stats, turn: number): Stats {
+  const lateTerm = turn >= 7;
+  return {
+    ...s,
+    budget: clamp(s.budget - 2),
+    heat: clamp(s.heat + (lateTerm ? 2 : 1)),
+    approval: clamp(s.approval - (lateTerm ? 2 : 1)),
+    trust: clamp(s.trust - (turn % 3 === 0 ? 2 : 0)),
+  };
+}
 function reaction(before: Stats, after: Stats, item: Choice) {
   if (after.justice - before.justice >= 12 && after.council < before.council)
     return "Community groups applaud. The council has formed a committee to investigate why.";
@@ -70,28 +80,28 @@ function reaction(before: Stats, after: Stats, item: Choice) {
 }
 function outcome(s: Stats) {
   let mayor = "The Well Meaning Chaos Mayor";
-  if (s.justice >= 72 && s.trust >= 60) mayor = "The Redistribution Mayor";
-  else if (s.heat <= 48 && s.approval >= 55) mayor = "The Heat Emergency Mayor";
+  if (s.justice >= 76 && s.trust >= 64) mayor = "The Redistribution Mayor";
+  else if (s.heat <= 45 && s.approval >= 62) mayor = "The Heat Emergency Mayor";
   else if (s.council >= 70 && s.justice < 50) mayor = "The Developer Friendly Mayor";
   else if (s.budget >= 65 && s.heat > 65) mayor = "The Budget Survival Mayor";
-  else if (s.approval >= 68 && s.heat > 62) mayor = "The Popular but Ineffective Mayor";
-  else if (s.trust >= 60 && s.council >= 55 && s.justice >= 55) mayor = "The Consensus Mayor";
+  else if (s.approval >= 72 && s.heat > 62) mayor = "The Popular but Ineffective Mayor";
+  else if (s.trust >= 66 && s.council >= 60 && s.justice >= 58) mayor = "The Consensus Mayor";
   else if (s.heat <= 58 && s.trust < 45) mayor = "The Technocrat Nobody Elected";
   let party = "The Last Minute Climate Front";
-  if (s.justice >= 68) party = "Neighbourhood Justice Movement";
+  if (s.justice >= 72) party = "Neighbourhood Justice Movement";
   else if (s.council >= 68 && s.justice < 52) party = "Green Managerial Coalition";
   else if (s.budget >= 62) party = "Budget First Independents";
-  else if (s.trust >= 62 && s.approval >= 58) party = "Civic Cooling Alliance";
-  else if (s.approval >= 65) party = "Municipal Pragmatists";
+  else if (s.trust >= 66 && s.approval >= 64) party = "Civic Cooling Alliance";
+  else if (s.approval >= 68) party = "Municipal Pragmatists";
   let election = "You lost badly. The trees may remember you more fondly than the electorate.";
-  if (s.approval >= 70)
+  if (s.approval >= 78 && s.trust >= 65)
     election =
       "You won the next election comfortably. Even the opposition copied your cooling plan.";
-  else if (s.approval >= 55)
+  else if (s.approval >= 66 && s.trust >= 55)
     election = "You won another term, after promising three parks and denying two budget reports.";
-  else if (s.approval >= 40)
+  else if (s.approval >= 52 && s.trust >= 42)
     election = "You survived the election by a margin small enough to blame on the weather.";
-  else if (s.approval >= 25)
+  else if (s.approval >= 38)
     election =
       "You lost the election. Your final press conference was held beside a very successful shade structure.";
   if (s.budget < 20) election += " The city may be cooler. The treasury is now mostly conceptual.";
@@ -124,7 +134,8 @@ export default function GameRedesign({ cityData, getChoices }: Props) {
   function choose(i: number) {
     if (selected !== null) return;
     const item = choices[i];
-    const after = item.apply({ ...stats, budget: clamp(stats.budget - item.cost) });
+    const afterChoice = item.apply({ ...stats, budget: clamp(stats.budget - item.cost) });
+    const after = applyTurnPressure(afterChoice, turn);
     setSelected(i);
     setPending(after);
     setResponse(reaction(stats, after, item));
@@ -212,7 +223,8 @@ export default function GameRedesign({ cityData, getChoices }: Props) {
               Begin your term <span>↘</span>
             </button>
             <small>
-              Your term lasts for 12 decisions, or until the public budget reaches zero.
+              Your term lasts for 12 decisions, or until the public budget reaches zero. Every
+              turn carries an administrative cost and political pressure.
             </small>
           </aside>
         </div>
@@ -284,6 +296,13 @@ export default function GameRedesign({ cityData, getChoices }: Props) {
             <h1>{turn === 1 ? "Set your first priority." : `A decision for ${district.name}.`}</h1>
             <p>{district.description}</p>
           </div>
+          <div className="sim-pressure">
+            <strong>Baseline pressure this turn</strong>
+            <span>Budget minus 2</span>
+            <span>Heat plus {turn >= 7 ? 2 : 1}</span>
+            <span>Approval minus {turn >= 7 ? 2 : 1}</span>
+            {turn % 3 === 0 && <span>Trust minus 2</span>}
+          </div>
           <div className="sim-choices">
             {choices.map((item, i) => (
               <button
@@ -310,7 +329,8 @@ export default function GameRedesign({ cityData, getChoices }: Props) {
               <blockquote>{response}</blockquote>
               <div>
                 <span>
-                  {choices[selected].effects} · Cost {choices[selected].cost}
+                  {choices[selected].effects} · Cost {choices[selected].cost} · Baseline pressure
+                  applied
                 </span>
                 <button onClick={next}>
                   {turn === 12 ? "Complete your term" : "Continue to next turn"} <b>↘</b>
