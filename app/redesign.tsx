@@ -126,34 +126,15 @@ function Metric({ label, value, color }: { label: string; value: number; color: 
   );
 }
 
-function ComparisonChart({ rankings, activeName, onSelect }: {
-  rankings: Record<Scenario, ReturnType<typeof rankFor>>;
+function PriorityBarChart({ ranked, activeName, onSelect }: {
+  ranked: ReturnType<typeof rankFor>;
   activeName: string;
   onSelect: (name: string) => void;
 }) {
-  const width = 960;
-  const height = 530;
-  const axes = [180, 480, 780];
-  const top = 78;
-  const step = 43;
-  const names = rankings.heat.map((item) => item.name);
-  const position = (name: string, key: Scenario) => rankings[key].find((item) => item.name === name)?.rank || 1;
-  return <div className="comparison-chart">
-    <div className="chart-intro"><div><span className="control-label">03 · Compare outcomes</span><h2>Does the policy logic change who comes first?</h2></div><p>Each line follows one neighbourhood across the three allocation rules. Flat lines indicate stable priorities. Steeper lines show where the model is sensitive to the selected weighting.</p></div>
-    <div className="chart-key"><span><i className="key-active"/>Selected area</span><span><i/>Other areas</span><small>Click a line or name to inspect it below</small></div>
-    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Neighbourhood ranking comparison across three policy logics">
-      {['Heat exposure priority','Equal weighting','Social vulnerability priority'].map((label,index)=><g key={label}><line x1={axes[index]} y1="55" x2={axes[index]} y2="500" className="chart-axis"/><text x={axes[index]} y="27" textAnchor="middle" className="chart-axis-title">{label}</text></g>)}
-      {Array.from({length:10},(_,index)=><g key={index}><text x="25" y={top+index*step+4} className="chart-rank">{String(index+1).padStart(2,'0')}</text><line x1="55" y1={top+index*step} x2="905" y2={top+index*step} className="chart-guide"/></g>)}
-      {names.map(name=>{
-        const points=(['heat','balanced','justice'] as Scenario[]).map((key,index)=>`${axes[index]},${top+(position(name,key)-1)*step}`).join(' ');
-        const selected=name===activeName;
-        return <g key={name} className={selected?'chart-series selected':'chart-series'} onClick={()=>onSelect(name)} tabIndex={0} role="button" onKeyDown={(event)=>{if(event.key==='Enter')onSelect(name)}}>
-          <polyline points={points}/>
-          {(['heat','balanced','justice'] as Scenario[]).map((key,index)=><circle key={key} cx={axes[index]} cy={top+(position(name,key)-1)*step} r={selected?7:4}/>) }
-          <text x="795" y={top+(position(name,'justice')-1)*step+4} className="chart-name">{name}</text>
-        </g>;
-      })}
-    </svg>
+  return <div className="priority-chart">
+    <div className="priority-chart-head"><div><span className="control-label">Priority ranking</span><h2>Who comes first?</h2></div><div className="priority-chart-legend"><span>Priority score</span><span>Heat</span><span>Age</span><span>Income</span></div></div>
+    <div className="priority-bars">{ranked.map((area)=><button key={area.name} type="button" className={activeName===area.name?'active':''} onClick={()=>onSelect(area.name)}><span className="priority-rank">{String(area.rank).padStart(2,'0')}</span><span className="priority-name">{area.name}</span><span className="priority-bar-track"><span className="priority-bar-fill" style={{width:`${(area.score/5)*100}%`}}/></span><strong className="priority-score">{area.score.toFixed(2)}</strong><span className="priority-values"><small>H {area.heat.toFixed(2)}</small><small>A {area.age.toFixed(2)}</small><small>I {area.income.toFixed(2)}</small></span></button>)}</div>
+    <p className="priority-chart-note">Scores range from 1 to 5 within the selected city sample. They show relative priority, not absolute heat risk.</p>
   </div>;
 }
 
@@ -230,25 +211,15 @@ export default function Redesign({ data, coordinates, centers }: Props) {
             <div><span>03</span><strong>Compare the result</strong><p>See which priorities remain stable and which move.</p></div>
           </section>
 
-          <section className="control-band" aria-label="Model controls">
-            <div className="control-group city-control">
-              <span className="control-label">01 · City</span>
-              <div>{CITIES.map((item) => <button key={item} className={city === item ? 'selected' : ''} onClick={() => { setCity(item); setActiveName(''); }}>{item}</button>)}</div>
-            </div>
-            <div className="control-group policy-control">
-              <span className="control-label">02 · Policy logic</span>
-              <div>{(Object.keys(POLICIES) as Scenario[]).map((key) => <button key={key} className={scenario === key ? 'selected' : ''} onClick={() => setScenario(key)}><small>{POLICIES[key].short}</small><strong>{Math.round(POLICIES[key].heat * 100)} / {Math.round(POLICIES[key].social * 100)}</strong></button>)}</div>
-            </div>
+          <section className="analysis-workspace" aria-label="Priority analysis">
+            <aside className="analysis-controls">
+              <div className="analysis-control-section"><span className="control-label">01 · Select a city</span><div className="city-buttons">{CITIES.map((item)=><button key={item} type="button" className={city===item?'selected':''} onClick={()=>{setCity(item);setActiveName('')}}>{item}</button>)}</div></div>
+              <div className="analysis-control-section"><span className="control-label">02 · Choose a policy logic</span><div className="policy-buttons">{(Object.keys(POLICIES) as Scenario[]).map((key)=><button key={key} type="button" className={scenario===key?'selected':''} onClick={()=>setScenario(key)}><span>{POLICIES[key].title}</span><small>{Math.round(POLICIES[key].heat*100)}% heat, {Math.round(POLICIES[key].social*100)}% social</small></button>)}</div></div>
+              <div className="current-policy"><span className="control-label">Current policy logic</span><h2>{policy.title}</h2><p className="policy-question">{policy.question}</p><p className="policy-explanation">{policy.reading}</p><div className="weight-line"><span style={{width:`${policy.heat*100}%`}}>Heat {Math.round(policy.heat*100)}%</span><span style={{width:`${policy.social*100}%`}}>Social {Math.round(policy.social*100)}%</span></div></div>
+              <div className="data-status"><span>{source.status}</span><b>{cityItems.length} interface observations</b><p>{source.note}</p>{source.links.length>0&&<div className="control-source-links">{source.links.map((link)=><a key={link.href} href={link.href} target="_blank" rel="noreferrer">{link.label} ↗</a>)}</div>}</div>
+            </aside>
+            <PriorityBarChart ranked={ranked} activeName={active?.name||''} onSelect={setActiveName}/>
           </section>
-
-          <section className="policy-reading">
-            <span className="control-label">Current frame</span>
-            <h2>{policy.title}</h2>
-            <p>{policy.question}</p>
-            <div><div className="weight-line"><span style={{ width: `${policy.heat * 100}%` }}>Heat {Math.round(policy.heat * 100)}%</span><span style={{ width: `${policy.social * 100}%` }}>Social {Math.round(policy.social * 100)}%</span></div><div className="data-status"><span>{source.status}</span><b>{cityItems.length} interface observations</b><p>{source.note}</p></div></div>
-          </section>
-
-          <ComparisonChart rankings={rankings} activeName={active?.name || ''} onSelect={setActiveName}/>
 
           <section className="evidence-grid">
             <div className="map-panel">
