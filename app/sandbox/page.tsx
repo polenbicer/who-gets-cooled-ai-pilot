@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import GameRedesign from "./redesign";
 import {
   ArrowLeft,
   ArrowRight,
@@ -704,6 +705,10 @@ function toneColor(t: string): string {
 }
 
 export default function MayorGamePage() {
+  return <GameRedesign cityData={CITY_DATA} getChoices={getChoicesForTurn} />;
+}
+
+export function LegacyMayorGamePage() {
   const [city, setCity] = useState<CityKey>("Istanbul");
   const [selectedDistrictIndex, setSelectedDistrictIndex] = useState(0);
   const [turn, setTurn] = useState(4);

@@ -53,6 +53,7 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
+import Redesign from './redesign';
 import {
   Table,
   TableBody,
@@ -62,10 +63,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-type City = 'Brussels' | 'Amsterdam' | 'Istanbul' | 'Izmir';
-type Scenario = 'heat' | 'balanced' | 'justice';
+export type City = 'Brussels' | 'Amsterdam' | 'Istanbul' | 'Izmir';
+export type Scenario = 'heat' | 'balanced' | 'justice';
 
-type Neighbourhood = {
+export type Neighbourhood = {
   city: City;
   name: string;
   heat: number;
@@ -76,7 +77,7 @@ type Neighbourhood = {
   lng?: number;
 };
 
-const DATASETS: Neighbourhood[] = [
+export const DATASETS: Neighbourhood[] = [
   // Amsterdam (10)
   { city: 'Amsterdam', name: 'Amsterdamse Poort e.o.', heat: 1.73, age: 1.90, income: 5.00, profile: 'High income vulnerability / subsidy dependency' },
   { city: 'Amsterdam', name: 'De Kolenkit', heat: 1.98, age: 2.13, income: 4.62, profile: 'High income vulnerability / subsidy dependency' },
@@ -126,7 +127,7 @@ const DATASETS: Neighbourhood[] = [
   { city: 'Izmir', name: 'Çeşme', heat: 1.00, age: 4.74, income: 3.33, profile: 'High elderly demographic vulnerability' },
 ];
 
-const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
+export const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   // Brussels
   'Marolles': { lat: 50.8385, lng: 4.3468 },
   'Molenbeek Historique': { lat: 50.8546, lng: 4.3340 },
@@ -176,14 +177,14 @@ const REAL_COORDS: Record<string, { lat: number; lng: number }> = {
   'Çeşme': { lat: 38.3220, lng: 26.3050 },
 };
 
-const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
+export const CITY_CENTERS: Record<City, { lat: number; lng: number; zoom: number }> = {
   Brussels: { lat: 50.8420, lng: 4.3550, zoom: 12 },
   Amsterdam: { lat: 52.3550, lng: 4.8950, zoom: 12 },
   Istanbul: { lat: 41.0350, lng: 28.9500, zoom: 11 },
   Izmir: { lat: 38.4200, lng: 27.1400, zoom: 11 },
 };
 
-const scenarios: Record<Scenario, { label: string; heatWeight: number; socialWeight: number; note: string }> = {
+export const scenarios: Record<Scenario, { label: string; heatWeight: number; socialWeight: number; note: string }> = {
   heat: {
     label: 'Technocratic Determinism (70/30)',
     heatWeight: 0.7,
@@ -216,6 +217,10 @@ export function getBivariateColor(heat: number, social: number): string {
   return BIVARIATE_MATRIX[sIndex][hIndex];
 }
 
+export default function Home() {
+  return <Redesign data={DATASETS} coordinates={REAL_COORDS} centers={CITY_CENTERS} />;
+}
+
 const chartConfig = {
   score: { label: 'Priority score', color: '#c2410c' },
 } satisfies ChartConfig;
@@ -230,7 +235,7 @@ function profileTone(profile: string) {
   return 'bg-stone-100 text-stone-800 ring-stone-200 border-stone-200';
 }
 
-export default function Home() {
+export function LegacyHome() {
   const [data] = useState<Neighbourhood[]>(DATASETS);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'methodology'>('dashboard');
   const [city, setCity] = useState<City>('Brussels');

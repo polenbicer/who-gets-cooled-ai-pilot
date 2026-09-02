@@ -1,6 +1,6 @@
 # Who Gets Cooled?
 
-**An AI-assisted urban heat governance and environmental justice pilot for Brussels and Amsterdam.**
+**An AI assisted urban heat governance and environmental justice pilot.**
 
 [Open the live interactive pilot](https://who-gets-cooled-pilot.bercestesanem-il.chatgpt.site)
 
@@ -36,7 +36,7 @@ Open municipal indicators
         ↓
 Human selection of indicators and proxies
         ↓
-Within-city conversion to relative 1–5 scores
+Within city conversion to relative 1 to 5 scores
         ↓
 K-means neighbourhood profiling
         ↓
@@ -49,7 +49,9 @@ Public scrutiny and human judgment
 
 ## Data
 
-The public prototype uses 10 demonstrative observations. The derived scores used by the interface are available in [`data/pilot_scores.csv`](data/pilot_scores.csv).
+The research dataset contains 10 documented demonstrative observations, five in Brussels and five in Amsterdam. Their derived scores are available in [`data/pilot_scores.csv`](data/pilot_scores.csv).
+
+The interface also contains prototype extensions for Istanbul and Izmir. Their complete source trail is not present in this repository. The interface labels them accordingly, and their values should not be cited as validated research findings.
 
 The underlying pilot indicators were assembled from official municipal and urban research sources, including Brussels' *Monitoring des Quartiers* and Amsterdam's *Onderzoek en Statistiek*. The cities' heat proxies are not identical: the Brussels pilot uses impervious-surface share, while the Amsterdam pilot uses built-up-surface share. Values are therefore standardised within each city and must not be interpreted as directly comparable temperatures.
 
@@ -60,7 +62,7 @@ See [`docs/methodology.md`](docs/methodology.md) for the scoring formula, assump
 - Ten neighbourhoods are sufficient for a demonstrator, but not for robust statistical generalisation.
 - The heat indicators are proxies rather than directly measured neighbourhood temperatures.
 - The source years differ across variables and cities.
-- A relative 1–5 score describes position within the selected city sample; it is not an absolute risk measure.
+- A relative 1 to 5 score describes position within the selected city sample; it is not an absolute risk measure.
 - Cluster labels are interpretive descriptions of patterns, not natural or permanent categories.
 - The interface currently embeds the precomputed pilot profiles; it does not retrain the clustering model in the browser.
 
@@ -88,14 +90,14 @@ pnpm build
 ## Technology
 
 - React and TypeScript
-- vinext / Vite
+- vinext and Vite
 - Recharts
 - Tailwind CSS and shadcn-style UI components
 
 ## Author
 
 **Polen Bicer**  
-Research interests: responsible AI, public-sector data, urban governance, environmental justice, and algorithmic legitimacy.
+Research interests: responsible AI, public sector data, urban governance, environmental justice, and algorithmic legitimacy.
 
 ## Status
 

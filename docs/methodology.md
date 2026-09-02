@@ -2,17 +2,19 @@
 
 ## Scope
 
-This demonstrator contains five neighbourhoods from Brussels and five from Amsterdam. The selected cases were used to test the design and communication of an AI-assisted decision sandbox; they do not constitute a representative sample of either city.
+The documented research dataset contains five neighbourhoods from Brussels and five from Amsterdam. The selected cases test the design and communication of an AI assisted decision sandbox. They do not constitute a representative sample of either city.
+
+The live interface also contains prototype extensions for Istanbul and Izmir. A complete source trail for those values is not included in the current repository. They must not be treated as validated research results until that documentation is completed.
 
 ## Indicators
 
 The pilot uses three dimensions:
 
-- **Relative heat-exposure proxy:** impervious-surface share for Brussels and built-up-surface share for Amsterdam.
+- **Relative heat exposure proxy:** impervious surface share for Brussels and built surface share for Amsterdam.
 - **Age vulnerability:** the share or derived relative position of residents aged 65 and older.
 - **Income vulnerability:** the inverse relative position of neighbourhood median income, so a lower income produces a higher vulnerability score.
 
-The heat proxies differ between cities. For that reason, all 1–5 scores are calculated within each city and describe relative position rather than a directly comparable physical temperature.
+The heat proxies differ between cities. For that reason, all 1 to 5 scores are calculated within each city and describe relative position rather than a directly comparable physical temperature.
 
 ## Relative scoring
 
@@ -28,7 +30,7 @@ For median income, the direction is reversed:
 income vulnerability = 5 − 4 × (income − city minimum) / (city maximum − city minimum)
 ```
 
-The result is a relative score from 1 to 5 within the selected city sample.
+The result is a relative score from 1 to 5 within the selected city sample. It is not a temperature, probability or absolute risk measure.
 
 ## AI-assisted profiling
 
@@ -47,9 +49,9 @@ social vulnerability = (age score + income score) / 2
 The interface calculates the priority score under three rules:
 
 ```text
-Heat-first    = 0.70 × heat + 0.30 × social vulnerability
+Heat first    = 0.70 × heat + 0.30 × social vulnerability
 Balanced      = 0.50 × heat + 0.50 × social vulnerability
-Justice-first = 0.30 × heat + 0.70 × social vulnerability
+Justice first = 0.30 × heat + 0.70 × social vulnerability
 ```
 
 These weights are not presented as objectively correct. They are deliberately explicit normative scenarios that allow users to observe how a change in public values changes the resulting ranking.
@@ -65,3 +67,7 @@ The tool should be read as a structured question: *Who moves up or down the prio
 3. Test additional indicators and alternative weight combinations.
 4. Report sensitivity and uncertainty in the rankings.
 5. Evaluate interpretability, legitimacy, and usefulness with relevant stakeholders.
+
+## Reading similar rankings
+
+The three scenarios may produce similar priority lists. That is a substantive result when heat exposure, age vulnerability and income vulnerability point in the same direction within this small sample. The interface reports stable priorities and model sensitive positions instead of manufacturing contrast between the scenarios.
