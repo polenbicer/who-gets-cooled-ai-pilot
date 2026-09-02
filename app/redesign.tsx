@@ -34,23 +34,23 @@ const POLICIES: Record<Scenario, {
 }> = {
   heat: {
     short: 'Heat first',
-    title: 'Technocratic efficiency',
+    title: 'Heat exposure priority',
     heat: 0.7,
     social: 0.3,
     question: 'Where is relative physical exposure highest?',
     reading: 'The rule gives greater weight to the heat proxy. Social vulnerability remains present, but secondary.',
   },
   balanced: {
-    short: 'Balanced',
-    title: 'Administrative balance',
+    short: 'Equal weight',
+    title: 'Equal weighting',
     heat: 0.5,
     social: 0.5,
     question: 'What changes when physical and social indicators count equally?',
     reading: 'The rule splits weight evenly between the heat proxy and the combined social vulnerability score.',
   },
   justice: {
-    short: 'Justice first',
-    title: 'Redistributive priority',
+    short: 'Social first',
+    title: 'Social vulnerability priority',
     heat: 0.3,
     social: 0.7,
     question: 'Who has the least capacity to absorb heat risk?',
@@ -64,16 +64,16 @@ const SOURCES: Record<City, {
   links: { label: string; href: string }[];
 }> = {
   Brussels: {
-    status: 'Documented pilot source',
-    note: 'Neighbourhood indicators were assembled from Brussels municipal and regional statistical sources. Impervious surface is used as a relative heat exposure proxy.',
+    status: 'Source portals identified',
+    note: 'The interface uses an impervious surface proxy. The repository identifies the source portals, but does not yet provide row level provenance for every interface observation.',
     links: [
       { label: 'Monitoring des Quartiers', href: 'https://monitoringdesquartiers.brussels/' },
       { label: 'Brussels Open Data, neighbourhood boundaries', href: 'https://opendata.brussels.be/explore/dataset/quartiers-du-monitoring-des-quartiers-ibsa-perspective-rbc/' },
     ],
   },
   Amsterdam: {
-    status: 'Documented pilot source',
-    note: 'Neighbourhood indicators were assembled from Amsterdam Research and Statistics. Built surface is used as a relative heat exposure proxy.',
+    status: 'Source portals identified',
+    note: 'The interface uses a built surface proxy. The repository identifies the source portals, but does not yet provide row level provenance for every interface observation.',
     links: [
       { label: 'Onderzoek en Statistiek', href: 'https://onderzoek.amsterdam.nl/' },
       { label: 'Amsterdam key figures dashboard', href: 'https://onderzoek.amsterdam.nl/interactief/dashboard-kerncijfers' },
@@ -126,6 +126,37 @@ function Metric({ label, value, color }: { label: string; value: number; color: 
   );
 }
 
+function ComparisonChart({ rankings, activeName, onSelect }: {
+  rankings: Record<Scenario, ReturnType<typeof rankFor>>;
+  activeName: string;
+  onSelect: (name: string) => void;
+}) {
+  const width = 960;
+  const height = 530;
+  const axes = [180, 480, 780];
+  const top = 78;
+  const step = 43;
+  const names = rankings.heat.map((item) => item.name);
+  const position = (name: string, key: Scenario) => rankings[key].find((item) => item.name === name)?.rank || 1;
+  return <div className="comparison-chart">
+    <div className="chart-intro"><div><span className="control-label">03 · Compare outcomes</span><h2>Does the policy logic change who comes first?</h2></div><p>Each line follows one neighbourhood across the three allocation rules. Flat lines indicate stable priorities. Steeper lines show where the model is sensitive to the selected weighting.</p></div>
+    <div className="chart-key"><span><i className="key-active"/>Selected area</span><span><i/>Other areas</span><small>Click a line or name to inspect it below</small></div>
+    <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Neighbourhood ranking comparison across three policy logics">
+      {['Heat exposure priority','Equal weighting','Social vulnerability priority'].map((label,index)=><g key={label}><line x1={axes[index]} y1="55" x2={axes[index]} y2="500" className="chart-axis"/><text x={axes[index]} y="27" textAnchor="middle" className="chart-axis-title">{label}</text></g>)}
+      {Array.from({length:10},(_,index)=><g key={index}><text x="25" y={top+index*step+4} className="chart-rank">{String(index+1).padStart(2,'0')}</text><line x1="55" y1={top+index*step} x2="905" y2={top+index*step} className="chart-guide"/></g>)}
+      {names.map(name=>{
+        const points=(['heat','balanced','justice'] as Scenario[]).map((key,index)=>`${axes[index]},${top+(position(name,key)-1)*step}`).join(' ');
+        const selected=name===activeName;
+        return <g key={name} className={selected?'chart-series selected':'chart-series'} onClick={()=>onSelect(name)} tabIndex={0} role="button" onKeyDown={(event)=>{if(event.key==='Enter')onSelect(name)}}>
+          <polyline points={points}/>
+          {(['heat','balanced','justice'] as Scenario[]).map((key,index)=><circle key={key} cx={axes[index]} cy={top+(position(name,key)-1)*step} r={selected?7:4}/>) }
+          <text x="795" y={top+(position(name,'justice')-1)*step+4} className="chart-name">{name}</text>
+        </g>;
+      })}
+    </svg>
+  </div>;
+}
+
 export default function Redesign({ data, coordinates, centers }: Props) {
   const [city, setCity] = useState<City>('Brussels');
   const [scenario, setScenario] = useState<Scenario>('heat');
@@ -176,7 +207,7 @@ export default function Redesign({ data, coordinates, centers }: Props) {
         <nav aria-label="Primary navigation">
           <button className={view === 'explore' ? 'active' : ''} onClick={() => setView('explore')}>Explore</button>
           <button className={view === 'method' ? 'active' : ''} onClick={() => setView('method')}>Method and sources</button>
-          <a href="/sandbox">Play as mayor <span>↘</span></a>
+          <a href="/sandbox">Policy simulation <span>↘</span></a>
         </nav>
       </header>
 
@@ -185,12 +216,18 @@ export default function Redesign({ data, coordinates, centers }: Props) {
           <section className="research-hero" id="top">
             <div>
               <p className="kicker">Urban heat governance pilot · 2026</p>
-              <h1>Cooling is never<br />just <span className="rotating-claim">{ROTATING[word]}</span>.</h1>
+              <h1>A priority ranking<br />is never <span className="rotating-claim">{ROTATING[word]}</span></h1>
             </div>
             <div className="hero-note">
-              <p>Change the policy logic. Watch the priority list move, or remain stubbornly similar.</p>
+              <p>Compare how three explicit policy priorities change which neighbourhoods come first for urban cooling.</p>
               <span>Developed by Polen Biçer</span>
             </div>
+          </section>
+
+          <section className="how-to" aria-label="How to use this tool">
+            <div><span>01</span><strong>Select a city</strong><p>Choose the urban sample you want to inspect.</p></div>
+            <div><span>02</span><strong>Choose a policy logic</strong><p>Change how heat and social vulnerability are weighted.</p></div>
+            <div><span>03</span><strong>Compare the result</strong><p>See which priorities remain stable and which move.</p></div>
           </section>
 
           <section className="control-band" aria-label="Model controls">
@@ -208,8 +245,10 @@ export default function Redesign({ data, coordinates, centers }: Props) {
             <span className="control-label">Current frame</span>
             <h2>{policy.title}</h2>
             <p>{policy.question}</p>
-            <div className="weight-line"><span style={{ width: `${policy.heat * 100}%` }}>Heat {Math.round(policy.heat * 100)}%</span><span style={{ width: `${policy.social * 100}%` }}>Social {Math.round(policy.social * 100)}%</span></div>
+            <div><div className="weight-line"><span style={{ width: `${policy.heat * 100}%` }}>Heat {Math.round(policy.heat * 100)}%</span><span style={{ width: `${policy.social * 100}%` }}>Social {Math.round(policy.social * 100)}%</span></div><div className="data-status"><span>{source.status}</span><b>{cityItems.length} interface observations</b><p>{source.note}</p></div></div>
           </section>
+
+          <ComparisonChart rankings={rankings} activeName={active?.name || ''} onSelect={setActiveName}/>
 
           <section className="evidence-grid">
             <div className="map-panel">
@@ -232,7 +271,7 @@ export default function Redesign({ data, coordinates, centers }: Props) {
                 <Metric label="Age vulnerability" value={active.age} color="#1746d1" />
                 <Metric label="Income vulnerability" value={active.income} color="#111111" />
               </div>
-              <div className="rank-comparison"><span>Heat first <b>#{comparison.find((x) => x.name === active.name)?.positions[0]}</b></span><span>Balanced <b>#{comparison.find((x) => x.name === active.name)?.positions[1]}</b></span><span>Justice first <b>#{comparison.find((x) => x.name === active.name)?.positions[2]}</b></span></div>
+              <div className="rank-comparison"><span>Heat exposure <b>#{comparison.find((x) => x.name === active.name)?.positions[0]}</b></span><span>Equal weighting <b>#{comparison.find((x) => x.name === active.name)?.positions[1]}</b></span><span>Social vulnerability <b>#{comparison.find((x) => x.name === active.name)?.positions[2]}</b></span></div>
             </aside>}
           </section>
 
