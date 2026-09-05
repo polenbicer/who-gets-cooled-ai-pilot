@@ -17,6 +17,7 @@ import math
 from pathlib import Path
 
 import geopandas as gpd
+import pandas as pd
 from shapely.geometry import box
 
 TARGET_CRS = "EPSG:3035"
@@ -94,7 +95,7 @@ def main() -> None:
         read_city_boundary(args.amsterdam, "AMS"),
     ]
     grid = gpd.GeoDataFrame(
-        gpd.pd.concat([build_city_grid(item) for item in boundaries], ignore_index=True),
+        pd.concat([build_city_grid(item) for item in boundaries], ignore_index=True),
         crs=TARGET_CRS,
     ).sort_values(["city", "grid_x", "grid_y"])
 
