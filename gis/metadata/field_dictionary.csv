@@ -1,0 +1,20 @@
+field_name,data_type,evidence_layer,unit,direction,derivation,web_role,status
+cell_id,text,all,identifier,none,"city code plus aligned EPSG:3035 grid coordinates",feature identifier,defined
+city,text,all,category,none,"BRU or AMS from study boundary",filter,defined
+geometry,polygon,all,metres,none,"500 m aligned square clipped only for display where required",map geometry,defined
+boundary_share,number,all,proportion,none,"cell area intersecting declared city boundary divided by 250000",quality/context,defined
+population,number,harmonised_core,persons,context,"Eurostat 2021 census grid allocation; method pending resolution audit",evidence panel,pending
+age_65_share,number,harmonised_core,percent,higher vulnerability,"population-weighted allocation from harmonised census grid",score and evidence panel,pending
+impervious_share,number,harmonised_core,percent,higher exposure,"mean Copernicus IMD 2021 value within cell",score and map,pending
+tree_cover_share,number,harmonised_core,percent,lower vulnerability,"mean selected Copernicus TCD value within cell",score and map,pending
+heat_anomaly,number,harmonised_core,standardised anomaly,higher exposure,"source and reference period not yet approved",score and map,blocked
+cool_access_m,number,harmonised_core,metres,higher vulnerability,"distance to consistently classified public cooling assets",score and map,pending
+income_vulnerability,number,local_context,city-relative score,higher vulnerability,"city-specific income indicator; definition documented separately",score and evidence panel,pending
+heat_first_score,number,derived,0-1,higher priority,"0.70 heat exposure plus 0.30 social vulnerability",scenario map,pending
+balanced_score,number,derived,0-1,higher priority,"0.50 heat exposure plus 0.50 social vulnerability",scenario map,pending
+justice_first_score,number,derived,0-1,higher priority,"0.30 heat exposure plus 0.70 social vulnerability",scenario map,pending
+rank_range,integer,derived,rank positions,higher sensitivity,"maximum scenario rank minus minimum scenario rank",disagreement map,pending
+rank_sd,number,derived,rank positions,higher sensitivity,"standard deviation of rank across declared specifications",disagreement map,pending
+priority_frequency,number,derived,proportion,higher robustness,"share of specifications placing cell in declared priority group",stable-priority map,pending
+consensus_class,text,derived,category,none,"rule-based summary of priority frequency and rank volatility",map legend,pending
+source_quality,text,all,category,none,"complete; partial; missing based on source register and cell coverage",evidence panel,defined
